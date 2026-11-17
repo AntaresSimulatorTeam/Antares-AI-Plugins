@@ -1,15 +1,15 @@
 ---
 name: creer-tickets-jira
 description: "Use when asked to create and verify one or more already-framed Antares Jira tickets via the Jira REST API, or to repair explicitly identified mojibake in a ticket created by this workflow."
-argument-hint: "Proposition(s) validée(s), équipe cible et clé(s) Epic"
+argument-hint: "Approved proposal(s), target team and Epic key(s)"
 ---
 
-# Créer des tickets Jira Antares
+# Create Antares Jira tickets
 
-Cette skill utilise l'API du Jira Antares pour créer des tickets déjà cadrés, pour une seule équipe par exécution. Elle ne conçoit pas le besoin et ne choisit pas le périmètre à la place du PO.
+This skill uses the Antares Jira API to create already-framed tickets for one team per execution. It does not design the need or choose scope on behalf of the PO.
 
-**Avant toute action**, lire et appliquer la procédure complète dans [workflow-jira.md](references/workflow-jira.md). Elle contient les règles de classification, les prérequis, les commandes, les contrôles et les limites, y compris pour la correction ciblée d'un texte mal encodé. Les chemins `<skill-dir>` dans cette procédure désignent le dossier contenant ce `SKILL.md`.
+**Before any action**, read and follow the complete [Jira workflow](references/workflow-jira.md). It contains classification rules, prerequisites, commands, checks and limits, including targeted repair of misencoded text. The `<skill-dir>` paths in that workflow refer to the folder containing this `SKILL.md`.
 
-Consulter [product-repository-component-map.md](references/product-repository-component-map.md) pour identifier l'équipe et le composant Jira. Les scripts nécessaires sont inclus dans `scripts/`; les prérequis et les sources sont décrits dans [sources.md](references/sources.md).
+Consult [product-repository-component-map.md](references/product-repository-component-map.md) to identify the team and Jira component. The required scripts are included in `scripts/`; prerequisites and sources are documented in [sources.md](references/sources.md).
 
-Ne jamais demander de PAT dans le chat. Avant toute création, effectuer le précheck sans écriture, présenter l'aperçu complet et obtenir une confirmation explicite. Rapporter les résultats vérifiés et les éventuels échecs sans relancer automatiquement les écritures.
+Write ticket content and the preview in French. Never request a PAT in chat. Before creation, run the read-only precheck, present the complete preview, and obtain explicit confirmation. Report verified results and failures without automatically retrying writes.

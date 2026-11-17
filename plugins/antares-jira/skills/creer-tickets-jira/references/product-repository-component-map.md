@@ -1,18 +1,18 @@
-# Correspondance produits, dépôts et composants Jira
+# Product, repository and Jira component mapping
 
-Utiliser le produit ou le comportement concerné pour identifier le composant Jira. Le dépôt qui héberge une issue ou une documentation ne détermine pas automatiquement l'équipe propriétaire.
+Use the affected product or behavior to identify the Jira component. The repository hosting an issue or documentation does not automatically determine the owning team.
 
-## Composants par équipe
+## Components by team
 
-| Équipe propriétaire | Composants Jira exacts |
+| Owning team | Exact Jira components |
 |---|---|
-| Simu, dont GEMS et Converter | `Simulateur`, `Xpansion` |
+| Simu, including GEMS and Converter | `Simulateur`, `Xpansion` |
 | Plateforme | `AntaresWeb`, `antares-craft` |
 | Pegase | `Pegase` |
 
-## Dépôts et composants
+## Repositories and components
 
-| Dépôt concerné | Composant Jira exact |
+| Affected repository | Exact Jira component |
 |---|---|
 | `Antares_Simulator` | `Simulateur` |
 | `AntaREST` | `AntaresWeb` |
@@ -21,6 +21,6 @@ Utiliser le produit ou le comportement concerné pour identifier le composant Ji
 | `antares-datamanager-front` | `Pegase` |
 | `antares-xpansion` | `Xpansion` |
 
-`antares-doc` est une documentation transverse et ne détermine pas à lui seul un composant Jira. Déduire le composant du produit dont le comportement est décrit ou du dépôt de référence utilisé pour la comparaison. Par exemple, une demande dans `antares-doc` qui compare la documentation à `Antares_Simulator` et concerne le comportement du simulateur relève de `Simulateur`.
+`antares-doc` is cross-product documentation and does not by itself determine a Jira component. Infer the component from the product whose behavior is described or the reference repository used for comparison. For example, an `antares-doc` request comparing documentation with `Antares_Simulator` and concerning simulator behavior belongs to `Simulateur`.
 
-Si le besoin concerne réellement plusieurs produits ou composants, ou si le contexte ne permet pas de trancher, demander une clarification au PO avant de choisir un composant.
+If the need genuinely spans multiple products or components, or context is insufficient, ask the PO to clarify before choosing a component.
