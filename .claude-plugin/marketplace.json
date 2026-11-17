@@ -1,0 +1,24 @@
+{
+  "name": "antares",
+  "description": "Claude Code plugins for study engineers working with Antares Simulator and the wider Antares ecosystem.",
+  "owner": {
+    "name": "AntaresSimulatorTeam",
+    "url": "https://github.com/AntaresSimulatorTeam"
+  },
+  "plugins": [
+    {
+      "name": "antares-simulator",
+      "source": "./plugins/antares-simulator",
+      "description": "Read-only checks and metadata handling for Antares Simulator studies on disk.",
+      "category": "energy",
+      "tags": ["antares", "antares-simulator", "power-systems", "study"]
+    },
+    {
+      "name": "antares-context",
+      "source": "./plugins/antares-context",
+      "description": "Orientation in the Antares ecosystem: products, file formats and which public repository holds what.",
+      "category": "energy",
+      "tags": ["antares", "ecosystem", "gems", "xpansion", "antares-web"]
+    }
+  ]
+}

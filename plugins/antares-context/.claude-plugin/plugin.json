@@ -1,0 +1,13 @@
+{
+  "name": "antares-context",
+  "version": "0.1.0",
+  "description": "Orientation in the Antares ecosystem: products, file formats and which public repository holds what.",
+  "author": {
+    "name": "RTE",
+    "url": "https://www.rte-france.com"
+  },
+  "homepage": "https://github.com/AntaresSimulatorTeam/Antares-AI-Plugins",
+  "repository": "https://github.com/AntaresSimulatorTeam/Antares-AI-Plugins",
+  "license": "MPL-2.0",
+  "keywords": ["antares", "ecosystem", "gems", "xpansion", "antares-web"]
+}

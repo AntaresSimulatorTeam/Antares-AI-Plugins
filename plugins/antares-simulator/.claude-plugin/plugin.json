@@ -1,0 +1,13 @@
+{
+  "name": "antares-simulator",
+  "version": "0.1.0",
+  "description": "Read-only checks and metadata handling for Antares Simulator studies on disk.",
+  "author": {
+    "name": "RTE",
+    "url": "https://www.rte-france.com"
+  },
+  "homepage": "https://github.com/AntaresSimulatorTeam/Antares-AI-Plugins",
+  "repository": "https://github.com/AntaresSimulatorTeam/Antares-AI-Plugins",
+  "license": "MPL-2.0",
+  "keywords": ["antares", "antares-simulator", "power-systems", "study", "energy"]
+}
