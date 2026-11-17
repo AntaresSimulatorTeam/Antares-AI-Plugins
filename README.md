@@ -39,6 +39,22 @@ claude plugin install antares-context@antares
 
 To try a local checkout, use `claude plugin marketplace add ./Antares-AI-Plugins` instead.
 
+## Use with GitHub Copilot
+
+The Claude marketplace commands above install Claude Code plugins; GitHub Copilot uses the skills in those
+plugins as [agent skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills). From the
+repository where you want to use them, install the skills with GitHub CLI 2.90.0 or later:
+
+```bash
+gh skill install AntaresSimulatorTeam/Antares-AI-Plugins plugins/antares-simulator/skills/study-check --agent copilot --scope project
+gh skill install AntaresSimulatorTeam/Antares-AI-Plugins plugins/antares-simulator/skills/study-metadata --agent copilot --scope project
+gh skill install AntaresSimulatorTeam/Antares-AI-Plugins plugins/antares-context/skills/antares-context --agent copilot --scope project
+```
+
+Install only the skills you need. Project-scoped skills are added to the current repository and are available to
+Copilot agents that support [agent skills](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills).
+Ask Copilot to perform a matching task, or mention the skill by name in your prompt.
+
 ## Layout
 
 ```
