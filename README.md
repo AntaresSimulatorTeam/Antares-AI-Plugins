@@ -65,7 +65,6 @@ Ask Copilot to perform a matching task, or mention the skill by name in your pro
 plugins/
   antares-simulator/
     .claude-plugin/plugin.json
-    agents/                             optional specialized subagents
     skills/
       study-check/SKILL.md             + references/ (study layout, solver CLI)
       study-metadata/SKILL.md
@@ -78,7 +77,8 @@ evals/<skill>/cases.md                 test prompts and expected behaviour
 Plugins are the installable units in the marketplace. They bundle user-facing skills and can also include
 specialized agents. Put a skill at `plugins/<plugin>/skills/<skill-name>/SKILL.md`; skills describe a capability
 that Claude can load when a request matches. Put an agent definition at
-`plugins/<plugin>/agents/<agent-name>.md` for a specialized subagent, typically for substantial side tasks.
+`plugins/<plugin>/agents/<agent-name>.md` for a specialized subagent, typically for substantial side tasks. No
+plugin ships an agent yet, so there is no `agents/` folder in the tree above.
 
 Evals are different: `evals/<skill-name>/cases.md` contains prompts and expected behaviour for checking a skill.
 These cases are for evaluation, not plugin components, and are not installed with a plugin.
