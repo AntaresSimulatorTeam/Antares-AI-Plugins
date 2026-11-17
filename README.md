@@ -16,6 +16,9 @@ format and tools. The skills are read-only by default and ask before changing a 
 | `antares-simulator` | `study-metadata` | Read a study's caption, author, version and dates, or rename it |
 | `antares-context` | `antares-context` | Find out what each Antares product does and which repository holds what |
 
+Each skill is self-contained: it carries all the context it needs in its own folder. `antares-context` only holds
+general knowledge about the ecosystem, not tied to any skill. You can install either plugin on its own.
+
 Skills trigger on their own when a request matches. You can also call them directly, for example
 `/antares-simulator:study-check ./my-study`.
 

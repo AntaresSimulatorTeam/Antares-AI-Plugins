@@ -8,6 +8,18 @@
 - A new plugin needs `plugins/<plugin>/.claude-plugin/plugin.json` and an entry in `.claude-plugin/marketplace.json`.
   The plugin `name` must be the same in both.
 
+## Self-contained skills, general context
+
+- **Each skill is self-contained.** Everything it needs (file layout, CLI options, values, procedure) lives in
+  its own folder: in `SKILL.md` or in `skills/<skill-name>/references/`. A skill never points to another skill's
+  files, and never relies on `antares-context` being installed. If two skills need the same fact, each one gets
+  its own copy, cut to what that skill uses.
+- **`antares-context` holds general knowledge only.** It covers things that are true regardless of the task: what
+  each product is, how they relate, which repository holds what. It doesn't name or point to specific skills, and
+  task-specific details don't go there.
+
+Test: delete every other skill and the `antares-context` plugin. Your skill must still work.
+
 ## How to write it
 
 - **Frontmatter:** `name` and `description`. Write the description as a trigger: *when* to use the skill ("Use
