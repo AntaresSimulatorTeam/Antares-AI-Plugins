@@ -1,0 +1,13 @@
+{
+  "name": "antares-jira",
+  "version": "0.1.0",
+  "description": "Create and verify approved Antares Jira tickets using the Jira REST API.",
+  "author": {
+    "name": "RTE",
+    "url": "https://www.rte-france.com"
+  },
+  "homepage": "https://github.com/AntaresSimulatorTeam/Antares-AI-Plugins",
+  "repository": "https://github.com/AntaresSimulatorTeam/Antares-AI-Plugins",
+  "license": "MPL-2.0",
+  "keywords": ["antares", "jira", "tickets"]
+}

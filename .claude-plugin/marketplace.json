@@ -19,6 +19,13 @@
       "description": "Orientation in the Antares ecosystem: products, file formats and which public repository holds what.",
       "category": "energy",
       "tags": ["antares", "ecosystem", "gems", "xpansion", "antares-web"]
+    },
+    {
+      "name": "antares-jira",
+      "source": "./plugins/antares-jira",
+      "description": "Create and verify approved Antares Jira tickets through the Jira REST API.",
+      "category": "productivity",
+      "tags": ["antares", "jira", "tickets"]
     }
   ]
 }
