@@ -46,6 +46,7 @@ To try a local checkout, use `claude plugin marketplace add ./Antares-AI-Plugins
 plugins/
   antares-simulator/
     .claude-plugin/plugin.json
+    agents/                             optional specialized subagents
     skills/
       study-check/SKILL.md             + references/ (study layout, solver CLI)
       study-metadata/SKILL.md
@@ -54,6 +55,14 @@ plugins/
     skills/antares-context/SKILL.md    + references/ (ecosystem, repos)
 evals/<skill>/cases.md                 test prompts and expected behaviour
 ```
+
+Plugins are the installable units in the marketplace. They bundle user-facing skills and can also include
+specialized agents. Put a skill at `plugins/<plugin>/skills/<skill-name>/SKILL.md`; skills describe a capability
+that Claude can load when a request matches. Put an agent definition at
+`plugins/<plugin>/agents/<agent-name>.md` for a specialized subagent, typically for substantial side tasks.
+
+Evals are different: `evals/<skill-name>/cases.md` contains prompts and expected behaviour for checking a skill.
+These cases are for evaluation, not plugin components, and are not installed with a plugin.
 
 Skills must sit directly under `skills/<skill-name>/SKILL.md`. Claude Code does not discover skills in deeper
 folders.
