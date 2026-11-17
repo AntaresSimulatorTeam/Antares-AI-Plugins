@@ -13,5 +13,4 @@ This skill only orients the user. It does not operate any tool. Load the referen
   holds. Use it for "where is the code / docs for X" questions.
 
 Both files describe public information as of 2026-11. If a question needs current details (versions, options,
-install steps), point the user to the product's documentation or repository instead of guessing. For a study on
-disk, the `antares-simulator` plugin's `study-check` and `study-metadata` skills do the hands-on work.
+install steps), point the user to the product's documentation or repository instead of guessing.
