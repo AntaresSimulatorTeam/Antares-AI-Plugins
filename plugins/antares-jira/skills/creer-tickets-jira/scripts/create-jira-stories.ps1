@@ -116,7 +116,8 @@ try {
             if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
                 $statusCode = [int]$_.Exception.Response.StatusCode
             }
-            if ([string]::IsNullOrWhiteSpace($responseBody) -and $_.Exception.Response) {
+            if ([string]::IsNullOrWhiteSpace($responseBody) -and
+                $_.Exception.Response -is [System.Net.HttpWebResponse]) {
                 $responseStream = $_.Exception.Response.GetResponseStream()
                 if ($responseStream) {
                     $reader = New-Object System.IO.StreamReader($responseStream)
@@ -285,7 +286,9 @@ try {
                 throw "Each story must have a nonempty value for '$propertyName'."
             }
         }
-        $criteria = @($story.acceptanceCriteria | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+        $criteria = @($story.acceptanceCriteria |
+            ForEach-Object { ([string]$_).Trim() } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
         if ($criteria.Count -eq 0) {
             throw "Story '$($story.summary)' must have at least one acceptance criterion."
         }
@@ -318,7 +321,7 @@ try {
         }
 
         $description = "**Objectif / pourquoi**`n$($story.objective.Trim())`n`n**Crit$([char]0x00E8)res d'acceptation**`n"
-        $description += (($criteria | ForEach-Object { '- ' + ([string]$_).Trim() }) -join "`n")
+        $description += (($criteria | ForEach-Object { '- ' + [string]$_ }) -join "`n")
 
         $plans.Add([pscustomobject]@{
             IssueKey           = [string]$story.issueKey
@@ -385,21 +388,24 @@ try {
 
             $currentSummary = [string]$fields.summary
             $currentDescription = [string]$fields.description
-            $hasMojibake = $false
+            $summaryHasMojibake = $false
+            $descriptionHasMojibake = $false
             foreach ($marker in $mojibakeMarkers) {
-                if ($currentSummary.Contains($marker) -or $currentDescription.Contains($marker)) {
-                    $hasMojibake = $true
-                    break
-                }
+                if ($currentSummary.Contains($marker)) { $summaryHasMojibake = $true }
+                if ($currentDescription.Contains($marker)) { $descriptionHasMojibake = $true }
             }
-            if (-not $hasMojibake -and
+            if (-not $summaryHasMojibake -and -not $descriptionHasMojibake -and
                 ($currentSummary -ne $plan.Summary -or $currentDescription -ne $plan.Description)) {
                 throw "Ticket $($plan.IssueKey) text has no detected mojibake and differs from the proposed correction; no update performed."
             }
+            $summaryNeedsUpdate = $summaryHasMojibake -and $currentSummary -ne $plan.Summary
+            $descriptionNeedsUpdate = $descriptionHasMojibake -and $currentDescription -ne $plan.Description
             $repairPlans.Add([pscustomobject]@{
-                Plan          = $plan
-                Issue         = $issue
-                NeedsUpdate   = ($currentSummary -ne $plan.Summary -or $currentDescription -ne $plan.Description)
+                Plan                   = $plan
+                Issue                  = $issue
+                SummaryNeedsUpdate     = $summaryNeedsUpdate
+                DescriptionNeedsUpdate = $descriptionNeedsUpdate
+                NeedsUpdate            = ($summaryNeedsUpdate -or $descriptionNeedsUpdate)
             })
         }
 
@@ -407,15 +413,18 @@ try {
             $plan = $repair.Plan
             if ($repair.NeedsUpdate) {
                 $issuePath = '/rest/api/2/issue/' + [Uri]::EscapeDataString($plan.IssueKey)
-                $updateFields = @{ fields = @{ summary = $plan.Summary; description = $plan.Description } }
+                $fieldsToUpdate = @{}
+                if ($repair.SummaryNeedsUpdate) { $fieldsToUpdate.summary = $plan.Summary }
+                if ($repair.DescriptionNeedsUpdate) { $fieldsToUpdate.description = $plan.Description }
+                $updateFields = @{ fields = $fieldsToUpdate }
                 Invoke-JiraApi -Method PUT -Path $issuePath -Body $updateFields | Out-Null
                 $verificationPath = $issuePath +
                     '?fields=project,issuetype,summary,description,components,reporter,' + $plan.EpicLinkFieldId
                 $verifiedIssue = Invoke-JiraApi -Method GET -Path $verificationPath
                 if ($verifiedIssue.key -ne $plan.IssueKey -or
                     $verifiedIssue.fields.issuetype.name -ne $plan.IssueTypeName -or
-                    $verifiedIssue.fields.summary -ne $plan.Summary -or
-                    $verifiedIssue.fields.description -ne $plan.Description) {
+                    ($repair.SummaryNeedsUpdate -and $verifiedIssue.fields.summary -ne $plan.Summary) -or
+                    ($repair.DescriptionNeedsUpdate -and $verifiedIssue.fields.description -ne $plan.Description)) {
                     throw "Ticket $($plan.IssueKey) text was updated but verification failed."
                 }
             }

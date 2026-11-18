@@ -146,8 +146,6 @@ try {
         Write-Output 'PAT valid; stored with DPAPI encryption in the current Windows profile.'
     }
     else {
-        $nativeBuffer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
-        $plainToken = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($nativeBuffer)
         $processInfo = New-Object System.Diagnostics.ProcessStartInfo
         $processInfo.FileName = $secretTool.Source
         $processInfo.Arguments = 'store --label=AntaresAI-Jira service AntaresAI account JiraDirectApi'
@@ -161,7 +159,7 @@ try {
             if (-not $storeProcess.Start()) {
                 throw 'Unable to start secret-tool.'
             }
-            $storeProcess.StandardInput.Write($plainToken)
+            $storeProcess.StandardInput.Write($token)
             $storeProcess.StandardInput.Close()
             $storeError = $storeProcess.StandardError.ReadToEnd()
             $storeProcess.WaitForExit()
@@ -174,7 +172,7 @@ try {
         }
         $storedToken = & $secretTool.Source lookup service AntaresAI account JiraDirectApi 2>$null
         if ($LASTEXITCODE -ne 0 -or
-            ((@($storedToken) -join "`n").TrimEnd("`r", "`n") -cne $plainToken)) {
+            ((@($storedToken) -join "`n").TrimEnd("`r", "`n") -cne $token)) {
             throw 'The PAT was sent to the Linux keyring but verification failed when reading it back.'
         }
         Write-Output 'PAT valid; stored in the Linux Secret Service keyring.'
@@ -199,5 +197,5 @@ finally {
         [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($nativeBuffer)
     }
     if ($secureToken) { $secureToken.Dispose() }
-    Remove-Variable token, plainToken, storedToken, storeOutput, secureToken, encryptedToken, headers, user -ErrorAction SilentlyContinue
+    Remove-Variable token, storedToken, storeOutput, secureToken, encryptedToken, headers, user -ErrorAction SilentlyContinue
 }
