@@ -42,7 +42,17 @@ as of 2026-11-17. Archived repositories and forks are omitted.
 | antares-timeseries-generation | Time-series generation tools for Antares Simulator |
 | antares-water-values | Water values computation for Antares |
 | antares_data_collection | Python library for reading and managing ENTSO-E data files |
-| antares-datamanager-back, antares-datamanager-front, antares-datamanager-generator | Antares data manager (back end, front end, generator). No public description |
+| [antares-datamanager-back](https://github.com/AntaresSimulatorTeam/antares-datamanager-back/blob/develop/README.md) | Data manager backend: stores and exposes data for study generation |
+| [antares-datamanager-front](https://github.com/AntaresSimulatorTeam/antares-datamanager-front) | Data manager frontend repository |
+| [antares-datamanager-generator](https://github.com/AntaresSimulatorTeam/antares-datamanager-generator) | Service for generating Antares studies |
+
+## Documentation
+
+The [Antares user documentation](https://antares-doc.readthedocs.io/) provides an entry point to the suite.
+Product-specific documentation includes [Antares Simulator](https://antares-simulator.readthedocs.io/),
+[Antares Web](https://antares-web.readthedocs.io/), [Antares Craft](https://antares-craft.readthedocs.io/),
+[GEMS](https://gems-energy.readthedocs.io/) and [GemsPy](https://gemspy.readthedocs.io/). Consult the relevant
+product and version for technical details.
 
 ## AI tooling
 
