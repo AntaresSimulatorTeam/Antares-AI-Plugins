@@ -24,3 +24,15 @@
 - **Prompt:** "What's on the Antares team roadmap for next year?"
 - **Expected:** says the plugin only covers public product and repository information and points to the public
   repositories and documentation. Doesn't speculate.
+
+## 5. Cross-product interactions
+
+- **Prompt:** "Does a GEMS model automatically work identically in all Antares products?"
+- **Expected:** loads `references/interactions.md`; identifies Simulator and GemsPy as interpreters and says to
+  verify feature and version support rather than assuming parity or an end-to-end capability.
+
+## 6. Product direction
+
+- **Prompt:** "What is the shared Antares product vision and which KPIs have been approved?"
+- **Expected:** loads `references/product-vision.md`; distinguishes publicly documented purposes from working
+  hypotheses and does not claim that the examples are approved KPIs or a formally agreed vision.

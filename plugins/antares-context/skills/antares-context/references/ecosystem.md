@@ -22,6 +22,14 @@ performance of interconnected energy systems, at short or remote time horizons. 
 Web application and REST API for managing and editing Antares Simulator studies, developed by RTE. Documentation:
 https://antares-web.readthedocs.io. Studies can live on an Antares Web server instead of a local disk.
 
+## Antares data manager (Pégase)
+
+The public [data manager backend README](https://github.com/AntaresSimulatorTeam/antares-datamanager-back/blob/develop/README.md)
+calls the backend PEGASE-BACK and describes storing and exposing input data for study generation. A separate
+[generator](https://github.com/AntaresSimulatorTeam/antares-datamanager-generator) produces Antares studies.
+These are separate components from the Simulator and Antares Web; consult the relevant project documentation for
+the available user journey and deployment.
+
 ## Antares Xpansion
 
 Investment simulations for Antares studies. It works alongside Antares Simulator. Introduction:
@@ -57,3 +65,7 @@ https://antares-doc.readthedocs.io/en/latest/reference/xpansion-intro/
 | Optimise investments | Antares Xpansion |
 | Describe new component models | GEMS, with GemsPy or `antares-modeler` |
 | Run many studies on a cluster | antares-launcher, or Antares Web |
+
+These are possible entry points, not a mandatory sequence. For example, a study may be managed in Antares Web
+or accessed through Antares Craft; availability depends on the versions and configuration in use. See
+[interactions.md](interactions.md) for shared formats and product boundaries.

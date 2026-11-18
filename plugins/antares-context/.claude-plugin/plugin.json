@@ -1,6 +1,6 @@
 {
   "name": "antares-context",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Orientation in the Antares ecosystem: products, file formats and which public repository holds what.",
   "author": {
     "name": "RTE",
