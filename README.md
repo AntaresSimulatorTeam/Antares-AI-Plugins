@@ -19,6 +19,26 @@ format and tools. The skills are read-only by default and ask before changing a 
 Each skill is self-contained: it carries all the context it needs in its own folder. `antares-context` only holds
 general knowledge about the ecosystem, not tied to any skill. You can install either plugin on its own.
 
+## Review pull requests in this repository
+
+The project-scoped `.github/skills/pr-review` skill guides Copilot reviews of changes to these plugins, skills,
+and their documentation. The `PR Reviewer` agent in `.github/agents/pr-review.agent.md` provides the same
+read-only review flow for manual use. These reviews check the diff and repository conventions; this repository
+has no build or test suite. For a manual review, select `PR Reviewer` in Copilot or ask Copilot to use
+`pr-review` on the pull request.
+
+To have GitHub Copilot review PRs automatically, a repository administrator can enable **Automatically request
+Copilot code review** in the repository's ruleset/branch rules. Individual users can also enable automatic reviews
+for their own PRs in Copilot settings. The repository custom instructions and project skill are available to
+Copilot Code Review when it runs; make sure the **Use custom instructions when reviewing pull requests** setting
+is enabled. These options are configured in GitHub settings, not by a workflow in this repository.
+
+To use the review skill in another repository, install it with GitHub CLI from that repository:
+
+```bash
+gh skill install AntaresSimulatorTeam/Antares-AI-Plugins .github/skills/pr-review --agent copilot --scope project
+```
+
 Skills trigger on their own when a request matches. You can also call them directly, for example
 `/antares-simulator:study-check ./my-study`.
 
@@ -71,6 +91,10 @@ plugins/
   antares-context/
     .claude-plugin/plugin.json
     skills/antares-context/SKILL.md    + references/ (ecosystem, repos)
+.github/
+  copilot-instructions.md             repository-wide Copilot guidance
+  agents/pr-review.agent.md           read-only PR review agent
+  skills/pr-review/SKILL.md           Copilot PR review skill
 evals/<skill>/cases.md                 test prompts and expected behaviour
 ```
 

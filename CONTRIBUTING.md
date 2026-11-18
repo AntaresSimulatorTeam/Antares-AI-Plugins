@@ -4,6 +4,8 @@
 
 - Add the skill to an existing plugin if it fits: `plugins/<plugin>/skills/<skill-name>/SKILL.md`.
 - Keep one level only. `skills/<group>/<skill>/` is not discovered.
+- A Copilot skill intended only for this repository (not distributed as a plugin) can live in
+  `.github/skills/<skill-name>/SKILL.md`.
 - The folder name and the `name` in the frontmatter must be identical: lowercase letters, digits and hyphens.
 - A new plugin needs `plugins/<plugin>/.claude-plugin/plugin.json` and an entry in `.claude-plugin/marketplace.json`.
   The plugin `name` must be the same in both.
