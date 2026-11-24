@@ -115,7 +115,11 @@ try {
     }
 
     $html = [string]$page.body.storage.value
-    $text = $html -replace '(?i)<br\s*/?>', "`n"
+    $text = [regex]::Replace($html, '(?s)<!\[CDATA\[(.*?)\]\]>', {
+        param($match)
+        [Net.WebUtility]::HtmlEncode($match.Groups[1].Value)
+    })
+    $text = $text -replace '(?i)<br\s*/?>', "`n"
     $text = $text -replace '(?i)<li[^>]*>', '- '
     $text = $text -replace '(?i)</(p|h[1-6]|li|tr|div|ul|ol|table)>', "`n"
     $text = $text -replace '(?i)</t[dh]>', ' | '

@@ -249,21 +249,21 @@ Formats d'URL acceptés : `?pageId=<id>`, `/pages/<id>/...`, `/display/<ESPACE>/
    ```
 
    `issueKey`, `issueType`, `component` et `objective` sont obligatoires; `epicKey` est optionnel (seul garde-fou appliqué s'il est fourni), et `acceptanceCriteria` doit contenir au moins un critère; `summary` et `labels` sont optionnels et ne sont modifiés que s'ils sont fournis. Lire le ticket actuel avant de présenter le changement.
-3. Exécuter le précheck en lecture seule, qui affiche le résumé actuel et proposé, les labels et la description, sans rien écrire :
+3. Exécuter le précheck, qui affiche le résumé actuel et proposé, les labels et la description sans rien écrire dans Jira. Il enregistre localement l'état Jira approuvé dans `<json-temporaire>.approved-preview.json`, à côté du JSON :
 
    ```powershell
    & (Join-Path '<skill-dir>' 'scripts\create-jira-stories.ps1') -InputPath <json-temporaire> -UpdateExisting -ValidateOnly
    ```
 
-4. Présenter au PO l'avant/après (au minimum la description, et le titre s'il change), puis demander une seule confirmation explicite avant toute écriture.
+4. Présenter au PO l'avant/après (au minimum la description, et le titre s'il change), puis demander une seule confirmation explicite avant toute écriture. Si l'état Jira change ensuite, le script refuse l'écriture : relancer le précheck, présenter le nouvel aperçu et demander une nouvelle confirmation.
 5. Après confirmation, exécuter une seule fois sans `-ValidateOnly` :
 
    ```powershell
    & (Join-Path '<skill-dir>' 'scripts\create-jira-stories.ps1') -InputPath <json-temporaire> -UpdateExisting
    ```
 
-   Le script relit le ticket après la mise à jour et affiche `UPDATED AND VERIFIED` ou `UNCHANGED`.
-6. Supprimer le JSON temporaire et le fichier Confluence temporaire dans un bloc `finally`. Rapporter la clé et les champs modifiés.
+   Le script exige le JSON et son fichier `.approved-preview.json`, vérifie que la proposition et l'état Jira n'ont pas changé depuis l'aperçu, puis relit le ticket après la mise à jour et affiche `UPDATED AND VERIFIED` ou `UNCHANGED`. En cas de conflit, ne pas réutiliser l'ancien aperçu : le PO doit examiner et confirmer un nouvel aperçu avant toute nouvelle écriture.
+6. Supprimer le JSON temporaire, son fichier `.approved-preview.json` et le fichier Confluence temporaire dans un bloc `finally`. Rapporter la clé et les champs modifiés.
 
 Ne jamais lancer le mode de mise à jour sur un ticket sans confirmation explicite du PO pour ce ticket précis.
 

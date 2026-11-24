@@ -162,7 +162,7 @@ try {
         )
 
         $issuePath = '/rest/api/2/issue/' + [Uri]::EscapeDataString($Plan.IssueKey) +
-            '?fields=project,issuetype,summary,description,components,labels,reporter,' + $Plan.EpicLinkFieldId
+            '?fields=project,issuetype,summary,description,components,labels,reporter,updated,' + $Plan.EpicLinkFieldId
         $issue = Invoke-JiraApi -Method GET -Path $issuePath
         $fields = $issue.fields
         $epicMismatch = (-not [string]::IsNullOrWhiteSpace($Plan.EpicKey)) -and ([string]$fields.($Plan.EpicLinkFieldId) -ne $Plan.EpicKey)
@@ -183,6 +183,61 @@ try {
             throw "Le ticket $($Plan.IssueKey) n'a pas le reporter associe au PAT; aucune mise a jour effectuee."
         }
         return $issue
+    }
+
+    function Get-TextSha256 {
+        param(
+            [Parameter(Mandatory = $true)]
+            [AllowEmptyString()]
+            [string] $Value
+        )
+
+        $sha256 = [Security.Cryptography.SHA256]::Create()
+        try {
+            $bytes = [Text.Encoding]::UTF8.GetBytes($Value)
+            return [Convert]::ToBase64String($sha256.ComputeHash($bytes))
+        }
+        finally {
+            $sha256.Dispose()
+        }
+    }
+
+    function Get-IssueUpdateBaseline {
+        param(
+            [Parameter(Mandatory = $true)]
+            $Issue
+        )
+
+        $currentLabels = @($Issue.fields.labels | ForEach-Object { [string]$_ } | Sort-Object)
+        $labelsJson = ConvertTo-Json -InputObject $currentLabels -Compress
+        $updated = [DateTimeOffset]::Parse(
+            [string]$Issue.fields.updated,
+            [Globalization.CultureInfo]::InvariantCulture
+        ).ToUniversalTime().ToString('o')
+        return [pscustomobject]@{
+            IssueKey          = [string]$Issue.key
+            UpdatedSha256     = Get-TextSha256 -Value $updated
+            SummarySha256     = Get-TextSha256 -Value ([string]$Issue.fields.summary)
+            DescriptionSha256 = Get-TextSha256 -Value ([string]$Issue.fields.description)
+            LabelsSha256      = Get-TextSha256 -Value $labelsJson
+        }
+    }
+
+    function Test-IssueMatchesApprovedBaseline {
+        param(
+            [Parameter(Mandatory = $true)]
+            $Issue,
+
+            [Parameter(Mandatory = $true)]
+            $Baseline
+        )
+
+        $currentBaseline = Get-IssueUpdateBaseline -Issue $Issue
+        return $currentBaseline.IssueKey -ceq $Baseline.IssueKey -and
+            $currentBaseline.UpdatedSha256 -ceq $Baseline.UpdatedSha256 -and
+            $currentBaseline.SummarySha256 -ceq $Baseline.SummarySha256 -and
+            $currentBaseline.DescriptionSha256 -ceq $Baseline.DescriptionSha256 -and
+            $currentBaseline.LabelsSha256 -ceq $Baseline.LabelsSha256
     }
 
     $currentUser = Invoke-JiraApi -Method GET -Path '/rest/api/2/myself'
@@ -210,6 +265,24 @@ try {
     $inputData = Get-Content -LiteralPath $InputPath -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($null -eq $inputData.stories -or @($inputData.stories).Count -eq 0) {
         throw 'Le JSON doit contenir au moins une story dans la propriete stories.'
+    }
+    $resolvedInputPath = (Resolve-Path -LiteralPath $InputPath).Path
+    $inputHash = (Get-FileHash -LiteralPath $resolvedInputPath -Algorithm SHA256).Hash
+    $approvedPreviewPath = "$resolvedInputPath.approved-preview.json"
+    $approvedPreview = $null
+    if ($UpdateExisting -and -not $ValidateOnly) {
+        if (-not (Test-Path -LiteralPath $approvedPreviewPath -PathType Leaf)) {
+            throw "Aucun apercu approuve trouve. Relancer -UpdateExisting -ValidateOnly, presenter le nouvel apercu et demander confirmation avant toute ecriture."
+        }
+        try {
+            $approvedPreview = Get-Content -LiteralPath $approvedPreviewPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        }
+        catch {
+            throw "Apercu approuve invalide; relancer -UpdateExisting -ValidateOnly et demander une nouvelle confirmation."
+        }
+        if ($approvedPreview.InputSha256 -cne $inputHash) {
+            throw "La proposition a change depuis l'apercu approuve. Relancer -UpdateExisting -ValidateOnly, presenter le nouvel apercu et demander une nouvelle confirmation."
+        }
     }
 
     $requestedIssueTypeNames = [Collections.Generic.List[string]]::new()
@@ -383,7 +456,7 @@ try {
         if ($labelsProvided) {
             $labels = @($story.labels | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
         }
-        if ($labels.Count -gt 0 -and -not $fieldMetadata.ContainsKey('labels')) {
+        if (-not $UpdateExisting -and $labels.Count -gt 0 -and -not $fieldMetadata.ContainsKey('labels')) {
             throw "Le champ Labels n''est pas disponible pour '$($story.summary)'."
         }
 
@@ -433,11 +506,15 @@ try {
             $currentSummary = [string]$issue.fields.summary
             $currentDescription = [string]$issue.fields.description
             $currentLabels = @($issue.fields.labels | ForEach-Object { [string]$_ } | Sort-Object)
+            $baseline = Get-IssueUpdateBaseline -Issue $issue
             $newSummary = if ($null -ne $plan.Summary) { $plan.Summary } else { $currentSummary }
             $newLabels = if ($plan.LabelsProvided) { @($plan.Labels | Sort-Object) } else { $currentLabels }
 
             $updatePlans.Add([pscustomobject]@{
                 Plan           = $plan
+                Issue          = $issue
+                Baseline       = $baseline
+                ApprovedBaseline = $null
                 CurrentSummary = $currentSummary
                 NewSummary     = $newSummary
                 CurrentDescription = $currentDescription
@@ -447,6 +524,26 @@ try {
                 NeedsDescription = ($plan.Description -cne $currentDescription)
                 NeedsLabels    = (($newLabels -join '|') -cne ($currentLabels -join '|'))
             })
+        }
+
+        if (-not $ValidateOnly) {
+            $approvedByIssueKey = @{}
+            foreach ($approvedIssue in @($approvedPreview.Issues)) {
+                if ($approvedByIssueKey.ContainsKey([string]$approvedIssue.IssueKey)) {
+                    throw 'L''apercu approuve contient des issueKey en doublon; relancer le precheck et demander une nouvelle confirmation.'
+                }
+                $approvedByIssueKey[[string]$approvedIssue.IssueKey] = $approvedIssue
+            }
+            if ($approvedByIssueKey.Count -ne $updatePlans.Count) {
+                throw 'La liste de tickets differe de l''apercu approuve. Relancer le precheck et demander une nouvelle confirmation.'
+            }
+            foreach ($update in $updatePlans) {
+                $approvedIssue = $approvedByIssueKey[[string]$update.Plan.IssueKey]
+                if ($null -eq $approvedIssue -or -not (Test-IssueMatchesApprovedBaseline -Issue $update.Issue -Baseline $approvedIssue)) {
+                    throw "Conflit Jira pour $($update.Plan.IssueKey) depuis l'apercu approuve. Relancer -UpdateExisting -ValidateOnly, presenter l'etat actuel et demander une nouvelle confirmation."
+                }
+                $update.ApprovedBaseline = $approvedIssue
+            }
         }
     }
 
@@ -471,7 +568,17 @@ try {
                 Write-Output $update.Plan.Description
             }
             $changedCount = @($updatePlans | Where-Object { $_.NeedsSummary -or $_.NeedsDescription -or $_.NeedsLabels }).Count
+            $preview = [pscustomobject]@{
+                InputSha256 = $inputHash
+                Issues      = @($updatePlans | ForEach-Object { $_.Baseline })
+            }
+            [IO.File]::WriteAllText(
+                $approvedPreviewPath,
+                (ConvertTo-Json -InputObject $preview -Depth 10),
+                [Text.UTF8Encoding]::new($false)
+            )
             Write-Output "PRECHECK OK (mise a jour): $($updatePlans.Count) ticket(s) controles, $changedCount a modifier; projet $projectKey; compte PAT valide. Aucune ecriture effectuee."
+            Write-Output "Apercu approuve enregistre : $approvedPreviewPath"
             return
         }
         $typeSummary = @($plans | Group-Object IssueTypeName | ForEach-Object { "$($_.Name) ($($_.Count))" }) -join ', '
@@ -495,6 +602,10 @@ try {
             if ($update.NeedsDescription) { $updateFields.description = $plan.Description }
             if ($update.NeedsLabels) { $updateFields.labels = @($update.NewLabels) }
             try {
+                $currentIssue = Invoke-JiraApi -Method GET -Path ($issuePath + '?fields=summary,description,labels,updated')
+                if (-not (Test-IssueMatchesApprovedBaseline -Issue $currentIssue -Baseline $update.ApprovedBaseline)) {
+                    throw "Conflit Jira pour $($plan.IssueKey) depuis l'apercu approuve. Aucune mise a jour effectuee pour ce ticket; relancer le precheck et demander une nouvelle confirmation."
+                }
                 Invoke-JiraApi -Method PUT -Path $issuePath -Body @{ fields = $updateFields } | Out-Null
                 $verificationFields = 'summary,description,labels,issuetype'
                 $verifiedIssue = Invoke-JiraApi -Method GET -Path ($issuePath + '?fields=' + $verificationFields)

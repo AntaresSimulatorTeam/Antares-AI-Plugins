@@ -1,6 +1,6 @@
 {
   "name": "antares-jira",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Create, verify or update Antares Jira tickets using the Jira REST API, from a chat spec or a Confluence page.",
   "author": {
     "name": "RTE",
