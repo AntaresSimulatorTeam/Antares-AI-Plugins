@@ -16,7 +16,7 @@ an explicit confirmation.
 | `antares-simulator` | `study-check` | Check a study folder before running it, or find out why the solver rejects it |
 | `antares-simulator` | `study-metadata` | Read a study's caption, author, version and dates, or rename it |
 | `antares-context` | `antares-context` | Find out what each Antares product does and which repository holds what |
-| `antares-jira` | `creer-tickets-jira` | Create and verify already-framed Antares Jira tickets after confirmation |
+| `antares-jira` | `creer-ou-modifier-tickets-jira` | Create, verify or update Antares Jira tickets after confirmation, from a chat spec or a Confluence page |
 
 Each skill is self-contained: it carries all the context it needs in its own folder. `antares-context` only holds
 general knowledge about the ecosystem, not tied to any skill. You can install either plugin on its own.
@@ -76,7 +76,7 @@ repository where you want to use them, install the skills with GitHub CLI 2.90.0
 gh skill install AntaresSimulatorTeam/Antares-AI-Plugins plugins/antares-simulator/skills/study-check --agent copilot --scope project
 gh skill install AntaresSimulatorTeam/Antares-AI-Plugins plugins/antares-simulator/skills/study-metadata --agent copilot --scope project
 gh skill install AntaresSimulatorTeam/Antares-AI-Plugins plugins/antares-context/skills/antares-context --agent copilot --scope project
-gh skill install AntaresSimulatorTeam/Antares-AI-Plugins plugins/antares-jira/skills/creer-tickets-jira --agent copilot --scope project
+gh skill install AntaresSimulatorTeam/Antares-AI-Plugins plugins/antares-jira/skills/creer-ou-modifier-tickets-jira --agent copilot --scope project
 ```
 
 Install only the skills you need. Project-scoped skills are added to the current repository and are available to
@@ -101,7 +101,7 @@ plugins/
     skills/antares-context/SKILL.md    + references/ (ecosystem, repos)
   antares-jira/
     .claude-plugin/plugin.json
-    skills/creer-tickets-jira/SKILL.md + references/ and scripts/
+    skills/creer-ou-modifier-tickets-jira/SKILL.md + references/ and scripts/
 .github/
   copilot-instructions.md             repository-wide Copilot guidance
   agents/pr-review.agent.md           read-only PR review agent
