@@ -23,7 +23,7 @@
     {
       "name": "antares-jira",
       "source": "./plugins/antares-jira",
-      "description": "Create and verify approved Antares Jira tickets through the Jira REST API.",
+      "description": "Create, verify or update Antares Jira tickets through the Jira REST API, from a chat spec or a Confluence page.",
       "category": "productivity",
       "tags": ["antares", "jira", "tickets"]
     }

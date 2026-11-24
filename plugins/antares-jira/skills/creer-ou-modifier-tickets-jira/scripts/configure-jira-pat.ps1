@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
     [switch] $TerminalPrompt
 )
@@ -15,14 +15,14 @@ elseif ($PSVersionTable.PSEdition -eq 'Core' -and $IsLinux) {
     $platform = 'Linux'
 }
 else {
-    throw 'This skill supports Windows and Linux only.'
+    throw 'Cette skill prend en charge Windows et Linux uniquement.'
 }
 
 $secretTool = $null
 if ($platform -eq 'Linux') {
     $secretTool = Get-Command 'secret-tool' -ErrorAction SilentlyContinue
     if ($null -eq $secretTool) {
-        throw "Linux PAT storage requires 'secret-tool' (libsecret-tools) and an accessible Secret Service keyring."
+        throw "Le stockage Linux du PAT requiert 'secret-tool' (libsecret-tools) et un trousseau Secret Service accessible."
     }
 }
 
@@ -30,13 +30,13 @@ function Get-SecurePat {
     param([switch] $UseTerminal)
 
     if ($UseTerminal -or $platform -eq 'Linux') {
-        return (Read-Host 'Jira RTE PAT (masked input; do not paste it in chat)' -AsSecureString)
+        return (Read-Host 'Jira RTE PAT (saisie masquee; ne pas le coller dans le chat)' -AsSecureString)
     }
     if (-not [Environment]::UserInteractive) {
-        throw 'No interactive graphical session. Run again with -TerminalPrompt in the integrated terminal.'
+        throw 'Aucune session graphique interactive. Relancer avec -TerminalPrompt depuis le terminal integre.'
     }
     if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne [Threading.ApartmentState]::STA) {
-        throw 'The secure dialog requires an STA process. Run again with -TerminalPrompt in the integrated terminal.'
+        throw 'Le dialogue securise requiert un processus STA. Relancer avec -TerminalPrompt depuis le terminal integre.'
     }
 
     Add-Type -AssemblyName System.Windows.Forms
@@ -46,7 +46,7 @@ function Get-SecurePat {
     $tokenBox = New-Object System.Windows.Forms.TextBox
     $plainToken = $null
     try {
-        $form.Text = 'Configure the Jira RTE PAT'
+        $form.Text = 'Configurer le PAT Jira RTE'
         $form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
         $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
         $form.MaximizeBox = $false
@@ -58,7 +58,7 @@ function Get-SecurePat {
         $label = New-Object System.Windows.Forms.Label
         $label.Location = New-Object System.Drawing.Point(16, 14)
         $label.Size = New-Object System.Drawing.Size(468, 43)
-        $label.Text = 'Create a personal PAT in Jira, then paste it here. It will not be sent in chat.'
+        $label.Text = 'Creez un PAT personnel dans Jira, puis collez-le ici. Il ne sera pas transmis dans le chat.'
         $form.Controls.Add($label)
 
         $tokenBox.Location = New-Object System.Drawing.Point(18, 62)
@@ -70,14 +70,14 @@ function Get-SecurePat {
         $okButton = New-Object System.Windows.Forms.Button
         $okButton.Location = New-Object System.Drawing.Point(286, 108)
         $okButton.Size = New-Object System.Drawing.Size(105, 30)
-        $okButton.Text = 'Confirm'
+        $okButton.Text = 'Valider'
         $okButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
         $form.Controls.Add($okButton)
 
         $cancelButton = New-Object System.Windows.Forms.Button
         $cancelButton.Location = New-Object System.Drawing.Point(395, 108)
         $cancelButton.Size = New-Object System.Drawing.Size(87, 30)
-        $cancelButton.Text = 'Cancel'
+        $cancelButton.Text = 'Annuler'
         $cancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
         $form.Controls.Add($cancelButton)
         $form.AcceptButton = $okButton
@@ -85,11 +85,11 @@ function Get-SecurePat {
         $form.Add_Shown({ $tokenBox.Focus() })
 
         if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-            throw 'PAT configuration cancelled; no new PAT was saved.'
+            throw 'Configuration du PAT annulee; aucun nouveau PAT n''a ete enregistre.'
         }
         $plainToken = $tokenBox.Text
         if ([string]::IsNullOrWhiteSpace($plainToken)) {
-            throw 'The PAT cannot be empty.'
+            throw 'Le PAT ne peut pas etre vide.'
         }
 
         $secureToken = New-Object System.Security.SecureString
@@ -109,7 +109,7 @@ function Get-SecurePat {
 $secureToken = Get-SecurePat -UseTerminal:$TerminalPrompt
 if ($null -eq $secureToken -or $secureToken.Length -eq 0) {
     if ($secureToken) { $secureToken.Dispose() }
-    throw 'The PAT cannot be empty.'
+    throw 'Le PAT ne peut pas etre vide.'
 }
 
 $nativeBuffer = [IntPtr]::Zero
@@ -131,7 +131,7 @@ try {
     if ([string]::IsNullOrWhiteSpace($user.name) -and
         [string]::IsNullOrWhiteSpace($user.key) -and
         [string]::IsNullOrWhiteSpace($user.accountId)) {
-        throw 'Jira did not return a user identifier.'
+        throw 'Jira n''a pas retourne d''identifiant utilisateur.'
     }
 
     if ($platform -eq 'Windows') {
@@ -143,7 +143,7 @@ try {
         Set-Content -LiteralPath $temporaryPath -Value $encryptedToken -Encoding ASCII -NoNewline
         Move-Item -LiteralPath $temporaryPath -Destination $credentialPath -Force
         $temporaryPath = $null
-        Write-Output 'PAT valid; stored with DPAPI encryption in the current Windows profile.'
+        Write-Output 'PAT valide; stockage chiffre DPAPI dans le profil Windows courant.'
     }
     else {
         $processInfo = New-Object System.Diagnostics.ProcessStartInfo
@@ -157,14 +157,14 @@ try {
         try {
             $storeProcess.StartInfo = $processInfo
             if (-not $storeProcess.Start()) {
-                throw 'Unable to start secret-tool.'
+                throw 'Impossible de demarrer secret-tool.'
             }
             $storeProcess.StandardInput.Write($token)
             $storeProcess.StandardInput.Close()
             $storeError = $storeProcess.StandardError.ReadToEnd()
             $storeProcess.WaitForExit()
             if ($storeProcess.ExitCode -ne 0) {
-                throw "Unable to store the PAT in the Linux Secret Service keyring: $storeError"
+                throw "Impossible de stocker le PAT dans le trousseau Secret Service Linux: $storeError"
             }
         }
         finally {
@@ -173,9 +173,9 @@ try {
         $storedToken = & $secretTool.Source lookup service AntaresAI account JiraDirectApi 2>$null
         if ($LASTEXITCODE -ne 0 -or
             ((@($storedToken) -join "`n").TrimEnd("`r", "`n") -cne $token)) {
-            throw 'The PAT was sent to the Linux keyring but verification failed when reading it back.'
+            throw 'Le PAT a ete transmis au trousseau Linux mais sa relecture de verification a echoue.'
         }
-        Write-Output 'PAT valid; stored in the Linux Secret Service keyring.'
+        Write-Output 'PAT valide; stockage dans le trousseau Secret Service Linux.'
     }
 }
 catch {
@@ -188,9 +188,9 @@ catch {
         $statusCode = [int]$_.Exception.Response.StatusCode
     }
     if ($statusCode) {
-        throw "PAT validation failed (HTTP $statusCode). No new PAT was saved."
+        throw "Echec de validation du PAT (HTTP $statusCode). Aucun nouveau PAT n'a ete enregistre."
     }
-    throw "PAT validation or storage failed. No new PAT was saved."
+    throw "Echec de validation ou de stockage du PAT. Aucun nouveau PAT n'a ete enregistre."
 }
 finally {
     if ($nativeBuffer -ne [IntPtr]::Zero) {

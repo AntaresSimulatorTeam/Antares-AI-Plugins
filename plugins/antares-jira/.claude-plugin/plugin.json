@@ -1,7 +1,7 @@
 {
   "name": "antares-jira",
   "version": "0.1.0",
-  "description": "Create and verify approved Antares Jira tickets using the Jira REST API.",
+  "description": "Create, verify or update Antares Jira tickets using the Jira REST API, from a chat spec or a Confluence page.",
   "author": {
     "name": "RTE",
     "url": "https://www.rte-france.com"
