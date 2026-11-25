@@ -123,14 +123,22 @@ try {
                 $statusCode = [int]$_.Exception.Response.StatusCode
             }
             if ([string]::IsNullOrWhiteSpace($responseBody) -and $_.Exception.Response) {
-                $responseStream = $_.Exception.Response.GetResponseStream()
-                if ($responseStream) {
-                    $reader = New-Object System.IO.StreamReader($responseStream)
-                    try {
-                        $responseBody = $reader.ReadToEnd()
+                $response = $_.Exception.Response
+                if ($response -is [System.Net.Http.HttpResponseMessage]) {
+                    if ($response.Content) {
+                        $responseBody = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
                     }
-                    finally {
-                        $reader.Dispose()
+                }
+                elseif ($response -is [System.Net.HttpWebResponse]) {
+                    $responseStream = $response.GetResponseStream()
+                    if ($responseStream) {
+                        $reader = New-Object System.IO.StreamReader($responseStream)
+                        try {
+                            $responseBody = $reader.ReadToEnd()
+                        }
+                        finally {
+                            $reader.Dispose()
+                        }
                     }
                 }
             }
@@ -423,7 +431,9 @@ try {
                 throw "Chaque story doit avoir une valeur non vide pour '$propertyName'."
             }
         }
-        $criteria = @($story.acceptanceCriteria | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+        $criteria = @($story.acceptanceCriteria |
+            ForEach-Object { ([string]$_).Trim() } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
         if ($criteria.Count -eq 0) {
             throw "La story '$($story.summary)' doit avoir au moins un critere d''acceptation."
         }
@@ -650,37 +660,40 @@ try {
 
             $currentSummary = [string]$fields.summary
             $currentDescription = [string]$fields.description
-            $hasMojibake = $false
+            $summaryHasMojibake = $false
+            $descriptionHasMojibake = $false
             foreach ($marker in $mojibakeMarkers) {
-                if ($currentSummary.Contains($marker) -or $currentDescription.Contains($marker)) {
-                    $hasMojibake = $true
-                    break
-                }
+                if ($currentSummary.Contains($marker)) { $summaryHasMojibake = $true }
+                if ($currentDescription.Contains($marker)) { $descriptionHasMojibake = $true }
             }
-            if (-not $hasMojibake -and
+            if (-not $summaryHasMojibake -and -not $descriptionHasMojibake -and
                 ($currentSummary -ne $plan.Summary -or $currentDescription -ne $plan.Description)) {
                 throw "Le texte du ticket $($plan.IssueKey) n'a pas de mojibake detecte et differe de la correction proposee; aucune mise a jour effectuee."
             }
             $repairPlans.Add([pscustomobject]@{
-                Plan          = $plan
-                Issue         = $issue
-                NeedsUpdate   = ($currentSummary -ne $plan.Summary -or $currentDescription -ne $plan.Description)
+                Plan            = $plan
+                Issue           = $issue
+                NeedsSummary    = $summaryHasMojibake -and $currentSummary -ne $plan.Summary
+                NeedsDescription = $descriptionHasMojibake -and $currentDescription -ne $plan.Description
             })
         }
 
         foreach ($repair in $repairPlans) {
             $plan = $repair.Plan
-            if ($repair.NeedsUpdate) {
+            if ($repair.NeedsSummary -or $repair.NeedsDescription) {
                 $issuePath = '/rest/api/2/issue/' + [Uri]::EscapeDataString($plan.IssueKey)
-                $updateFields = @{ fields = @{ summary = $plan.Summary; description = $plan.Description } }
+                $fieldsToUpdate = @{}
+                if ($repair.NeedsSummary) { $fieldsToUpdate.summary = $plan.Summary }
+                if ($repair.NeedsDescription) { $fieldsToUpdate.description = $plan.Description }
+                $updateFields = @{ fields = $fieldsToUpdate }
                 Invoke-JiraApi -Method PUT -Path $issuePath -Body $updateFields | Out-Null
                 $verificationPath = $issuePath +
                     '?fields=project,issuetype,summary,description,components,reporter,' + $plan.EpicLinkFieldId
                 $verifiedIssue = Invoke-JiraApi -Method GET -Path $verificationPath
                 if ($verifiedIssue.key -ne $plan.IssueKey -or
                     $verifiedIssue.fields.issuetype.name -ne $plan.IssueTypeName -or
-                    $verifiedIssue.fields.summary -ne $plan.Summary -or
-                    $verifiedIssue.fields.description -ne $plan.Description) {
+                    ($repair.NeedsSummary -and $verifiedIssue.fields.summary -ne $plan.Summary) -or
+                    ($repair.NeedsDescription -and $verifiedIssue.fields.description -ne $plan.Description)) {
                     throw "Le texte du ticket $($plan.IssueKey) a ete mis a jour mais la verification a echoue."
                 }
             }

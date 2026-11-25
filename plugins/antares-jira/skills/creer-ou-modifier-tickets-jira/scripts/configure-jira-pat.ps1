@@ -132,6 +132,7 @@ if ($null -eq $secureToken -or $secureToken.Length -eq 0) {
 
 $nativeBuffer = [IntPtr]::Zero
 $temporaryPath = $null
+$configurationInvalidated = $false
 try {
     $nativeBuffer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
     $token = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($nativeBuffer)
@@ -152,8 +153,11 @@ try {
         throw 'Jira n''a pas retourne d''identifiant utilisateur.'
     }
 
-    Save-JiraSkillConfig -JiraBaseUrl $jiraBaseUrl -ConfluenceBaseUrl $confluenceBaseUrl
-    Write-Output "Configuration des URL enregistree: $jiraBaseUrl (Jira), $confluenceBaseUrl (Confluence)."
+    $configPath = Join-Path (Get-JiraSkillConfigDirectory) 'config.json'
+    if (Test-Path -LiteralPath $configPath -PathType Leaf) {
+        Remove-Item -LiteralPath $configPath -Force
+    }
+    $configurationInvalidated = $true
 
     if ($platform -eq 'Windows') {
         $encryptedToken = ConvertFrom-SecureString -SecureString $secureToken
@@ -167,8 +171,7 @@ try {
         Write-Output 'PAT valide; stockage chiffre DPAPI dans le profil Windows courant.'
     }
     else {
-        $nativeBuffer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
-        $plainToken = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($nativeBuffer)
+        $plainToken = $token
         $processInfo = New-Object System.Diagnostics.ProcessStartInfo
         $processInfo.FileName = $secretTool.Source
         $processInfo.Arguments = 'store --label=AntaresAI-Jira service AntaresAI account JiraDirectApi'
@@ -200,10 +203,17 @@ try {
         }
         Write-Output 'PAT valide; stockage dans le trousseau Secret Service Linux.'
     }
+
+    Save-JiraSkillConfig -JiraBaseUrl $jiraBaseUrl -ConfluenceBaseUrl $confluenceBaseUrl
+    Write-Output "Configuration des URL enregistree: $jiraBaseUrl (Jira), $confluenceBaseUrl (Confluence)."
 }
 catch {
     if ($temporaryPath -and (Test-Path -LiteralPath $temporaryPath)) {
         Remove-Item -LiteralPath $temporaryPath -Force
+    }
+
+    if ($configurationInvalidated) {
+        throw 'Echec de stockage du PAT. Configuration des URL invalidee; relancer la configuration.'
     }
 
     $statusCode = $null
@@ -220,5 +230,5 @@ finally {
         [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($nativeBuffer)
     }
     if ($secureToken) { $secureToken.Dispose() }
-    Remove-Variable token, plainToken, storedToken, storeOutput, secureToken, encryptedToken, headers, user -ErrorAction SilentlyContinue
+    Remove-Variable token, plainToken, storedToken, storeOutput, secureToken, encryptedToken, headers, user, configurationInvalidated -ErrorAction SilentlyContinue
 }
