@@ -8,8 +8,9 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$confluenceHost = 'gopro-collaboratif.rte-france.com'
-$confluenceBaseUrl = "https://$confluenceHost"
+. (Join-Path $PSScriptRoot 'jira-skill-config.ps1')
+$confluenceBaseUrl = (Get-JiraSkillConfig).ConfluenceBaseUrl
+$confluenceHost = ([Uri]$confluenceBaseUrl).Host
 
 if ($env:OS -eq 'Windows_NT') {
     $platform = 'Windows'

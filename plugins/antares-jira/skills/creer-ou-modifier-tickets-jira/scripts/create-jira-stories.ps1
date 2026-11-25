@@ -12,7 +12,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$baseUrl = 'https://gopro-tickets.rte-france.com'
+. (Join-Path $PSScriptRoot 'jira-skill-config.ps1')
+$baseUrl = (Get-JiraSkillConfig).JiraBaseUrl
 $projectKey = 'ANT'
 $supportedIssueTypeNames = @('Anomalie', 'User Story', 'Technical Stories')
 if ($env:OS -eq 'Windows_NT') {
@@ -121,16 +122,23 @@ try {
             if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
                 $statusCode = [int]$_.Exception.Response.StatusCode
             }
-            if ([string]::IsNullOrWhiteSpace($responseBody) -and
-                $_.Exception.Response -is [System.Net.HttpWebResponse]) {
-                $responseStream = $_.Exception.Response.GetResponseStream()
-                if ($responseStream) {
-                    $reader = New-Object System.IO.StreamReader($responseStream)
-                    try {
-                        $responseBody = $reader.ReadToEnd()
+            if ([string]::IsNullOrWhiteSpace($responseBody) -and $_.Exception.Response) {
+                $response = $_.Exception.Response
+                if ($response -is [System.Net.Http.HttpResponseMessage]) {
+                    if ($response.Content) {
+                        $responseBody = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
                     }
-                    finally {
-                        $reader.Dispose()
+                }
+                elseif ($response -is [System.Net.HttpWebResponse]) {
+                    $responseStream = $response.GetResponseStream()
+                    if ($responseStream) {
+                        $reader = New-Object System.IO.StreamReader($responseStream)
+                        try {
+                            $responseBody = $reader.ReadToEnd()
+                        }
+                        finally {
+                            $reader.Dispose()
+                        }
                     }
                 }
             }
@@ -461,7 +469,7 @@ try {
         }
 
         $description = "**Objectif / pourquoi**`n$($story.objective.Trim())`n`n**Crit$([char]0x00E8)res d'acceptation**`n"
-        $description += (($criteria | ForEach-Object { '- ' + [string]$_ }) -join "`n")
+        $description += (($criteria | ForEach-Object { '- ' + ([string]$_).Trim() }) -join "`n")
 
         $plans.Add([pscustomobject]@{
             IssueKey           = [string]$story.issueKey
@@ -662,24 +670,21 @@ try {
                 ($currentSummary -ne $plan.Summary -or $currentDescription -ne $plan.Description)) {
                 throw "Le texte du ticket $($plan.IssueKey) n'a pas de mojibake detecte et differe de la correction proposee; aucune mise a jour effectuee."
             }
-            $summaryNeedsUpdate = $summaryHasMojibake -and $currentSummary -ne $plan.Summary
-            $descriptionNeedsUpdate = $descriptionHasMojibake -and $currentDescription -ne $plan.Description
             $repairPlans.Add([pscustomobject]@{
-                Plan                   = $plan
-                Issue                  = $issue
-                SummaryNeedsUpdate     = $summaryNeedsUpdate
-                DescriptionNeedsUpdate = $descriptionNeedsUpdate
-                NeedsUpdate            = ($summaryNeedsUpdate -or $descriptionNeedsUpdate)
+                Plan            = $plan
+                Issue           = $issue
+                NeedsSummary    = $summaryHasMojibake -and $currentSummary -ne $plan.Summary
+                NeedsDescription = $descriptionHasMojibake -and $currentDescription -ne $plan.Description
             })
         }
 
         foreach ($repair in $repairPlans) {
             $plan = $repair.Plan
-            if ($repair.NeedsUpdate) {
+            if ($repair.NeedsSummary -or $repair.NeedsDescription) {
                 $issuePath = '/rest/api/2/issue/' + [Uri]::EscapeDataString($plan.IssueKey)
                 $fieldsToUpdate = @{}
-                if ($repair.SummaryNeedsUpdate) { $fieldsToUpdate.summary = $plan.Summary }
-                if ($repair.DescriptionNeedsUpdate) { $fieldsToUpdate.description = $plan.Description }
+                if ($repair.NeedsSummary) { $fieldsToUpdate.summary = $plan.Summary }
+                if ($repair.NeedsDescription) { $fieldsToUpdate.description = $plan.Description }
                 $updateFields = @{ fields = $fieldsToUpdate }
                 Invoke-JiraApi -Method PUT -Path $issuePath -Body $updateFields | Out-Null
                 $verificationPath = $issuePath +
@@ -687,8 +692,8 @@ try {
                 $verifiedIssue = Invoke-JiraApi -Method GET -Path $verificationPath
                 if ($verifiedIssue.key -ne $plan.IssueKey -or
                     $verifiedIssue.fields.issuetype.name -ne $plan.IssueTypeName -or
-                    ($repair.SummaryNeedsUpdate -and $verifiedIssue.fields.summary -ne $plan.Summary) -or
-                    ($repair.DescriptionNeedsUpdate -and $verifiedIssue.fields.description -ne $plan.Description)) {
+                    ($repair.NeedsSummary -and $verifiedIssue.fields.summary -ne $plan.Summary) -or
+                    ($repair.NeedsDescription -and $verifiedIssue.fields.description -ne $plan.Description)) {
                     throw "Le texte du ticket $($plan.IssueKey) a ete mis a jour mais la verification a echoue."
                 }
             }

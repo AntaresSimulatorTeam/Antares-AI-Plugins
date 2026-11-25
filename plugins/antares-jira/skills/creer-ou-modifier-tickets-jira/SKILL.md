@@ -107,31 +107,34 @@ Dans les exemples, `<skill-dir>` est un placeholder : le remplacer par le chemin
 
 Si la skill est invoquée depuis une autre intégration GitHub que Copilot, les règles de lecture des issues GitHub ne s'appliquent que si l'agent dispose d'un outil GitHub permettant de lire l'issue. Sinon, demander au PO de coller le contenu nécessaire; ne jamais prétendre avoir consulté une issue inaccessible.
 
-## Configuration du PAT (une fois par PO et par profil utilisateur)
+## Configuration du PAT et des URL (une fois par PO et par profil utilisateur)
 
 - Ne jamais demander, accepter, afficher, journaliser ou placer un PAT dans le chat, un fichier du dépôt, un argument de script ou le JSON temporaire des stories.
+- Les URL Jira et Confluence ne sont pas dans le dépôt : elles sont enregistrées localement par la configuration (`config.json`, dans le même dossier que le PAT sous Windows, `~/.config/AntaresAI/JiraDirectApi/` sous Linux). Si les scripts signalent une configuration absente, demander au PO les deux URL dans le chat (ce ne sont pas des secrets), par exemple l'URL Jira `https://<hote-jira>.rte-france.com` et l'URL Confluence `https://<hote-confluence>.rte-france.com`, puis les passer à la configuration. Ne jamais deviner une URL. Les scripts refusent toute URL hors `rte-france.com` et toute URL avec chemin, afin de ne jamais envoyer le PAT ailleurs.
 - Les scripts détectent automatiquement Windows ou Linux à chaque exécution; ne pas demander au PO de préciser son OS et ne pas mémoriser ce choix.
 - Si le PAT est absent ou rejeté par Jira, expliquer au PO : « Créez un PAT personnel dans Jira. Quand vous l'avez, dites-moi que vous êtes prêt; ne le collez pas dans le chat. » Attendre cette réponse avant de lancer la configuration locale.
-- Sous Windows, lancer le script avec l'outil PowerShell. Il ouvre une fenêtre locale avec saisie masquée (ou utilise `-TerminalPrompt` si la fenêtre n'est pas disponible) et chiffre le PAT avec DPAPI dans le profil Windows courant.
+- Sous Windows, lancer le script avec l'outil PowerShell. Il ouvre une fenêtre locale avec saisie masquée (ou utilise `-TerminalPrompt` si la fenêtre n'est pas disponible), chiffre le PAT avec DPAPI dans le profil Windows courant et enregistre les URL. Première configuration, avec les URL fournies par le PO :
 
   ```powershell
-  & (Join-Path '<skill-dir>' 'scripts\configure-jira-pat.ps1')
+  & (Join-Path '<skill-dir>' 'scripts\configure-jira-pat.ps1') -JiraUrl '<url-jira>' -ConfluenceUrl '<url-confluence>'
   ```
 
   Si la fenêtre ne peut pas s'ouvrir, utiliser la saisie masquée du terminal :
 
   ```powershell
-  & (Join-Path '<skill-dir>' 'scripts\configure-jira-pat.ps1') -TerminalPrompt
+  & (Join-Path '<skill-dir>' 'scripts\configure-jira-pat.ps1') -JiraUrl '<url-jira>' -ConfluenceUrl '<url-confluence>' -TerminalPrompt
   ```
+
+  Si `config.json` existe déjà et que les URL sont inchangées, relancer sans `-JiraUrl` ni `-ConfluenceUrl` : le script réutilise la configuration enregistrée.
 
 - Sous Linux, PowerShell 7 (`pwsh`), `secret-tool` (`libsecret-tools`) et un trousseau Secret Service accessible sont requis. Le script utilise la saisie masquée du terminal et stocke le PAT dans ce trousseau; il ne l'écrit pas dans un fichier. Lancer :
 
   ```sh
-  pwsh -File '<skill-dir>/scripts/configure-jira-pat.ps1'
+  pwsh -File '<skill-dir>/scripts/configure-jira-pat.ps1' -JiraUrl '<url-jira>' -ConfluenceUrl '<url-confluence>'
   ```
 
 - Si `secret-tool` ou le trousseau Linux est indisponible, s'arrêter et expliquer le prérequis; ne pas installer de paquet automatiquement et ne jamais utiliser de fichier en clair comme solution de repli.
-- La configuration valide le PAT avec `/rest/api/2/myself` avant de le stocker. Un PAT invalide n'est pas enregistré; un éventuel PAT déjà stocké n'est pas supprimé. Chaque PO configure son propre PAT; ne pas partager le PAT d'un autre utilisateur.
+- La configuration valide le PAT avec `/rest/api/2/myself` sur l'URL Jira fournie avant de le stocker et d'enregistrer les URL. Un PAT invalide n'est pas enregistré; un éventuel PAT déjà stocké n'est pas supprimé. Chaque PO configure son propre PAT; ne pas partager le PAT d'un autre utilisateur.
 - Le PAT hérite des droits Jira du compte du PO; ce compte doit pouvoir parcourir le projet `ANT` et y créer des issues. La skill ne contourne pas les permissions du projet.
 - Si le PAT ne peut pas être configuré, s'arrêter et expliquer le blocage; ne pas basculer vers le navigateur.
 
@@ -217,7 +220,7 @@ Utiliser ce mode quand le PO demande de réécrire le contenu d'un ticket Antare
 
 **Source de la spec**, dans l'un de ces deux cas :
 1. Texte fourni dans la conversation courante ou collé par le PO.
-2. Page Confluence (certains PO rédigent leurs specs dans `https://gopro-collaboratif.rte-france.com/`). Lire la page avec le script ci-dessous, qui réutilise le PAT Jira : le compte Jira est autorisé sur Confluence. Le script refuse toute URL d'un autre hôte afin de ne jamais envoyer le PAT ailleurs. Il n'affiche pas le contenu de la page : lire ensuite le fichier de sortie pour en extraire la description.
+2. Page Confluence (certains PO rédigent leurs specs dans leur instance Confluence GoPro, dont l'URL est enregistrée par la configuration). Lire la page avec le script ci-dessous, qui réutilise le PAT Jira : le compte Jira est autorisé sur Confluence. Le script refuse toute URL d'un autre hôte que l'URL Confluence configurée afin de ne jamais envoyer le PAT ailleurs. Il n'affiche pas le contenu de la page : lire ensuite le fichier de sortie pour en extraire la description.
 
 ```powershell
 & (Join-Path '<skill-dir>' 'scripts\read-confluence-page.ps1') -Url '<url-confluence>' -OutputPath <fichier-temporaire-txt>
