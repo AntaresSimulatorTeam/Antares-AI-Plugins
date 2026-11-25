@@ -5,7 +5,7 @@ Read this for: language syntax/semantics choices, library or system file format 
 ## Mental model
 
 - GEMS is the **contract**; GemsPy (Python) and Antares_Simulator (C++, hybrid mode first, modeler second) are **two interpreters** of it. Divergence between them is the main language-level product risk: every proposal says what it means for both.
-- **Hybrid mode is where Antares effort goes.** Judge Antares feasibility in hybrid terms first: connections to legacy areas, Monte Carlo scenarios optimised one by one, LP vs MILP, Antares horizon and resolution. Known limits (re-verify in `GEMS/doc/interoperability/hybrid/limitations.md`): series must match horizon/resolution; integer/binary variables need MILP; no scenario-independent variables. A construct that is elegant in the language but impossible in hybrid is a priority red flag: scope it to GemsPy/modeler first, or list what hybrid needs.
+- **Hybrid mode is where Antares effort goes.** Judge Antares feasibility with the hybrid check (`ecosystem-map.md`) first. A construct that is elegant in the language but impossible in hybrid is a priority red flag: scope it to GemsPy/modeler first, or list what hybrid needs.
 - **The language is versioned**: language and docs share a version (`GEMS/doc/home/release-notes.md`; current numbers in `versions.md`); `GEMS/COMPATIBILITY.md` maps it to Antares-Simulator and GemsPy versions and defines the rules (patch = backward compatible, minor = new features that older interpreters may not support, major = may break). Libraries have their own versions + CHANGELOG + sha256 in `GEMS/libraries/`. Every language change states its bump level and the COMPATIBILITY.md row it creates.
 - Beyond the interpreters, a language change can hit: Xpansion `gems` workflow (optim-config, `antares-problem-generator`), ViewsBuilder (simulation table, taxonomy, catalog, view-config), converters (legacy->GEMS, PyPSA->GEMS output must stay valid), reference libraries, e2e tests (`GEMS/tests/e2e_tests/`: legacy-models equivalence, doc QSE examples, tutorials, PyPSA-Eur). Use `interactions.md` heuristics.
 
@@ -31,7 +31,7 @@ Divergence classes to check:
 
 1. **Precedence and associativity**: the same operators can parse differently (e.g. unary minus vs power: `-2^2`). The diff does not show the effect; confirm with a test in both interpreters before reporting a bug.
 2. **Alternative order**: the same alternatives listed in a different order can make ambiguous inputs parse differently.
-3. **Semantics outside the grammar**: default time/scenario dependence, aggregation scaling (e.g. `sum(x)` over a block of a time-constant `x`, scaled by the horizon in Simulator 10.3: GemsPy parity to verify), what is allowed where (variables in bounds, nonlinear terms in constraints or objectives), functions available. Check interpreter docs, changelogs and tests.
+3. **Semantics outside the grammar**: default time/scenario dependence, aggregation scaling (e.g. `sum(x)` over a block of a time-constant `x`; version-specific behaviour in `versions.md`), what is allowed where (variables in bounds, nonlinear terms in constraints or objectives), functions available. Check interpreter docs, changelogs and tests.
 4. **Interpreter ahead of the spec**: a construct in both grammars but missing from GEMS `syntax.md` / release notes. Flag as spec debt.
 5. **One-sided features**: in GemsPy only, in the Simulator only, or stored by AntaREST with no Simulator interpreter behind it. Check GEMS release notes and both changelogs.
 6. **Hybrid-only keys**: accepted by GemsPy's hybrid writer (`write_yaml_hybrid_library`) and hybrid studies, rejected by the "full GEMS" format. Check that a proposal says which format it targets.
@@ -43,7 +43,7 @@ Divergence classes to check:
 1. Restate the **problem from the modeller's point of view** (concrete use case) before any syntax.
 2. At least two real options + "do nothing"; compare; recommend; say what would change your mind.
 3. Criteria: expressiveness for energy systems | readability close to math notation | unambiguity and self-containedness | implementation cost in both interpreters | backward compatibility and migration | impact on converters and libraries | testability with e2e validation tests | consistency with existing constructs (no special cases) | ecosystem consumers (Xpansion, ViewsBuilder, tooling).
-4. Hybrid-mode check (legacy areas, Monte Carlo, LP/MILP, horizon/resolution).
+4. Hybrid check (`ecosystem-map.md`).
 5. One or two worked examples in GEMS YAML / expression notation, verified or marked illustrative.
 6. Version impact (patch/minor/major), COMPATIBILITY.md row, docs and examples to update.
 
@@ -85,7 +85,7 @@ Consequences.
 
 ## Compatibility, hybrid check, migration
 Version bump: patch | minor | major (new COMPATIBILITY.md row: language x.y.z <-> Antares a.b.c <-> GemsPy d.e.f).
-Hybrid: legacy areas | Monte Carlo | LP/MILP | horizon/resolution.
+Hybrid check: <result per item>.
 Migration of existing models/libraries. Converter impact.
 
 ## Work implied
@@ -114,7 +114,7 @@ Migration of existing models/libraries. Converter impact.
 
 ## Workflow C: interpreter release notes
 
-Audience: Antares C++ and GemsPy developers first, then modellers. Title with the language version and the interpreter versions (e.g. "GEMS 0.5.0 / Antares 10.3 / GemsPy 0.3"). Link issues/PRs only when provided; never invent them.
+Audience: Antares C++ and GemsPy developers first, then modellers. Title with the language version and the interpreter versions. Link issues/PRs only when provided; never invent them.
 
 ```markdown
 # Release notes: GEMS <x.y.z> / Antares <version> / GemsPy <version>

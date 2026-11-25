@@ -1,6 +1,7 @@
 # Ecosystem map (snapshot 2026-11-25)
 
-Built from each repo's remote default branch on 2026-11-25. Version numbers and pins live in `versions.md`.
+Built from each repo's remote default branch on 2026-11-25. Version numbers live in `versions.md`, doc paths in
+`sources.md`.
 Local clones (optional): `$ANDROMEDE_ROOT/<repo>`. GitHub organisation: https://github.com/AntaresSimulatorTeam.
 "Andromede" is RTE's programme behind GEMS; the `andromede_models` GEMS library is "the library of models from
 RTE's Andromede project".
@@ -54,10 +55,6 @@ A repo with no Jira component of its own: name the team above, and ask for the c
 - PO angle: any change to C1, craft's object model or Web's study-creation API can break generation. The
   legacy -> GEMS direction implies a GEMS or hybrid output path here, or reliance on the legacy -> GEMS converter:
   an open product question for the Pegase team.
-- Read first: `antares-datamanager-back/README.md`, `.../controller/`, `src/main/resources/db/changelog/`;
-  `antares-datamanager-generator/README.md`, `src/antares/datamanager/generator/generate_study_process.py`,
-  `core/settings.py`, `models/study_data_json_model.py` (the back -> generator contract);
-  `antares-datamanager-front/src/pages/pegase`. No docs site.
 
 ### GEMS: language, docs, libraries
 - Role: Generic Energy systems Modelling Schema. Object/graph-oriented modelling language close to maths, plus a
@@ -66,47 +63,34 @@ A repo with no Jira component of its own: name the team above, and ask for the c
   sha256) and e2e validation tests.
 - Versioning: language and docs share one version; `COMPATIBILITY.md` maps it to Simulator and GemsPy versions;
   `dependencies.json` pins the Simulator used by e2e tests. Method and templates: `gems-language.md`.
-- Read first: `README.md`, `doc/home/{roadmap,key-principles,features,release-notes}.md`,
-  `doc/overview/architecture.md`, `doc/user-guide/syntax.md`, `doc/user-guide/input-files/*.md` (library, system,
-  data-series, calendar, optimization-configuration, scenario-builder, solver-optimization, taxonomy, catalog,
-  view-config), `doc/user-guide/outputs/*`, `doc/interoperability/hybrid/*`,
-  `doc/overview/gems-interpreters/{antares-simulator,gemspy}.md`, `doc/interoperability/{legacy,pypsa-to-gems-converter}/`.
-- Docs: https://gems-energy.readthedocs.io/en/latest/
 
 ### GemsPy: Python GEMS interpreter
 - Role: standalone Python interpreter (PyPI `gemspy`), solver-agnostic; packages `gems_craft` (build/read studies)
   and `gems_runner` (run). Writes simulation tables to disk per scenario (Parquet by default), has a read API and a
   hybrid library writer (`write_yaml_hybrid_library`). Historically the prototype for new language features.
 - Users: Python modellers, researchers, converter and ViewsBuilder developers.
-- Read first: `README.md`, `docs/user-guide/{building,converters,inputs,optim-config,optimisation,outputs,scenario-builder}.md`,
-  `docs/CHANGELOG.md`, `grammar/Expr.g4`.
-- Docs: https://gemspy.readthedocs.io/en/latest/
 
 ### GEMS-ViewsBuilder: business views on outputs (prototype)
 - Role: builds views (aggregated perspectives) on a GEMS simulation table. Inputs: system (or
   `system-for-views.yml`), libraries, taxonomy, simulation table (Parquet/CSV), calendar, catalogs of metrics, view
   configs. Output: one file per view and aggregation pattern, read back by Antares Web (C13).
 - Roadmap: GEMS "Now" item = integrate directly with Simulator and GemsPy outputs.
-- Read first: `README.md`, `docs/{index,getting-started,developer-guide}.md`, `docs/user-guide/`, GEMS
-  `doc/user-guide/input-files/{taxonomy,catalog,view-config}.md`, `doc/user-guide/outputs/views.md`.
 
 ### Antares_Simulator: production engine (C++)
 - Role: open-source power-system simulator (RTE, MPL-2.0): Monte Carlo, hourly year-long scenarios, adequacy and
   economic studies. Three faces:
   - **Legacy solver** (`antares-solver`): areas, links, thermal/renewable clusters, short-term storage, hydro,
-    binding constraints, reserves, thermal ramping (10.3).
+    binding constraints, reserves, thermal ramping.
   - **Hybrid mode**: legacy study + GEMS files in `input/` (`system.yml`, `model-libraries/`, `data-series/`), run
     by `antares-solver`; `system.yml` makes a study hybrid; settings from Antares. Outputs = legacy outputs + one
-    simulation table per year and weekly-resolution stage. Limits (re-check `GEMS/doc/interoperability/hybrid/limitations.md`):
-    series must match horizon/resolution; integer variables need MILP; no scenario-independent variables.
+    simulation table per year and weekly-resolution stage.
+  - **Hybrid check** (the one list other files refer to; re-check `GEMS/doc/interoperability/hybrid/limitations.md`):
+    connections to legacy areas; Monte Carlo scenarios optimised one by one (so no cross-scenario operators and no
+    scenario-independent variables); LP vs MILP (integer variables need MILP); series must match the Antares horizon
+    and resolution; legacy outputs and simulation table stay consistent.
   - **Modeler** (`antares-modeler`): GEMS-only, free from the legacy time/uncertainty structure; requires
     `optim-config.yml`.
   - Also: ts-generator, MPS export, adequacy patch, peak shaving.
-- Read first: `docs/reference/solver/hybrid-studies.md`, `docs/reference/modeler/0*-*.md`,
-  `docs/reference/migration-guides.md`, `docs/architecture-decision-record/*`, `docs/architecture/*`,
-  `docs/developer-guide/simulation-table-e2e-coverage.md`, `docs/developer-guide/8-study-format-conventions.md`,
-  `docs/developer-guide/CHANGELOG.md` (`NEWS.md` only points to it; unreleased notes live on the release branch).
-- Docs: https://antares-simulator.readthedocs.io/ (technical), https://antares-doc.readthedocs.io/ (user).
 
 ### antares-xpansion: investment planning
 - Role: optimises investment in generation and transmission on top of Antares studies (investment annuity +
@@ -116,10 +100,6 @@ A repo with no Jira component of its own: name the team above, and ask for the c
 - GEMS link: the `gems` step, auto-activated when `input/optim-config.yml` exists.
 - Direction: **trajectory (pluriannual) investment** on a scenario tree of annual studies
   (`docs/reference/trajectory-investment/`), robust resume, micro-iterations.
-- Read first: `README.md`, `docs/reference/cli.md`, `docs/reference/inputs/*`,
-  `docs/developer-guide/xpansion-steps/index.md`, `docs/reference/trajectory-investment/*`,
-  `docs/overview/CHANGELOG.md` (on the release branch), ADRs in `conception/Architecture_decision_records/`.
-- Docs: https://antares-xpansion.readthedocs.io/
 
 ### antares_craft: Python API for Antares studies
 - Role: Python library (PyPI `antares_craft`) to read and edit studies **locally or on an Antares Web server** (one
@@ -127,8 +107,6 @@ A repo with no Jira component of its own: name the team above, and ask for the c
   series, configure Xpansion.
 - GEMS / hybrid support: **none** in releases or on `main` (grep, 2026-11-25). antares-doc lists "GEMS usable with
   Antares Craft and Antares Web" as in progress, so this is a known gap.
-- Read first: `README.md`, `docs/getting-started/architecture.md`, `docs/api-reference/`, `docs/CHANGELOG.md`.
-- Docs: https://antares-craft.readthedocs.io/
 
 ### AntaREST: Antares Web
 - Role: web API + React UI over Antares studies: study ids and HTTP API, matrix storage, **variant manager**
@@ -140,15 +118,11 @@ A repo with no Jira component of its own: name the team above, and ask for the c
   GEMS outputs are flagged and **views produced by ViewsBuilder are read from `<output>/views/`**
   (`antarest/output/filestudy/gems_views.py`). Which of this the UI exposes, and who runs ViewsBuilder in a Web
   run: to verify (not described in `docs/`).
-- Read first: `docs/index.md`, `docs/architecture.md`, `docs/configuration.md` (launcher: binaries per version),
-  `docs/database.md`, `docs/add-new-antares-version.md`, `docs/CHANGELOG.md`. End-user docs live in antares-doc.
-- Docs: https://antares-web.readthedocs.io/
 
 ### antares-launcher: SLURM batch submission
 - Role: CLI sending Antares studies to a remote SLURM cluster (ssh, STUDIES-IN / FINISHED / LOGS directories); used
   as a library by AntaREST's SLURM launcher. GEMS-agnostic (runs a study folder). The README's "studies 7.0
   through 8.5" is outdated.
-- Read first: `README.md`, `CHANGES.md`, `doc/`.
 
 ### antares-doc: user documentation
 - Role: MkDocs-Material **user documentation of the whole suite** (Web, Craft, Simulator, Modeler CLI, Xpansion),

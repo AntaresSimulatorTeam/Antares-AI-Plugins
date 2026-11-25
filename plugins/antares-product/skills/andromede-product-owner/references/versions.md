@@ -1,10 +1,11 @@
 # Versions and pins (snapshot 2026-11-25)
 
-This file holds every fact in this skill that ages quickly: release numbers, pins and known lags. Other reference
-files avoid version numbers and point here instead, so a refresh only touches this file.
+This file holds every fact in this skill that ages quickly: release numbers, pins, version-specific changes to the
+contracts, roadmap delivery status and known lags. Other reference files point here instead of naming versions, so a
+refresh only touches this file.
 
-Read on 2026-11-25 from each repo's **remote default branch**, plus release branches where stated. Re-check with
-`scripts/ecosystem_status.sh --fetch` (PowerShell: `scripts\ecosystem_status.ps1 -Fetch`) and the file named in the last column; repo files win on conflict.
+Read on 2026-11-25 from each repo's **remote default branch**, plus release branches where stated. Re-check with the
+status script (SKILL.md Step 0) and the file named in the last column; repo files win on conflict.
 
 ## Releases and work in progress
 
@@ -42,5 +43,31 @@ Read on 2026-11-25 from each repo's **remote default branch**, plus release bran
 | antares-timeseries-generation | generator `requirements.txt` | 0.1.9 | - |
 
 A non-empty "Gap" is the drift between producer and consumer. A Simulator minor (such as 10.3) changes several
-contracts at once (the "from 10.3" notes in `interactions.md`), so each consumer pinned on the previous one needs an
-explicit bump plan.
+contracts at once (next section), so each consumer pinned on the previous one needs an explicit bump plan.
+
+## Version-specific contract changes
+
+Feature deliveries (reserves, thermal ramping, Parquet) are in the roadmap status table below.
+
+| Version | Change | Contracts / consumers |
+|---|---|---|
+| Simulator 10.3 (rc) | Hydro leeway removed from the study format | C1: Web, craft, datamanager, migration guide |
+| Simulator 10.3 (rc) | Simulation tables move to `simulation-tables/` | C4: ViewsBuilder, readers |
+| Simulator 10.3 (rc) | Year, week and day 0-based in optimisation problem file names | C6: Xpansion `lp_namer` (`MpsTxtWriter.cpp`) |
+| Simulator 10.3 (rc) | `system-for-views.yml` in `views/input/` of the output; legacy component ids lose `_node` / `_link`, spaces become underscores | C12, C4, converter view configs |
+| Simulator 10.3 (rc) | `sum(x)` over a block of a time-constant `x` is scaled by the horizon | GemsPy parity to verify |
+| Web 2.36-2.37 | GEMS storage, API and hybrid launch; 2.37 reads ViewsBuilder views | C2, C3, C13 |
+
+## User-facing roadmap delivery status
+
+antares-doc `overview/roadmap.md` (page unchanged since 2026-06-04) lists these as "working on"; status found in the
+repos on 2026-11-25:
+
+| Item | Status in the repos |
+|---|---|
+| Reserves model (FCR, aFFR, mFRR, RR) | Shipped in Simulator 10.2 and Web; scenarised reserve needs in 10.3 (rc): candidate to move to "delivered" |
+| **GEMS models in hybrid studies, usable with Craft and Web** | Web: storage, API and hybrid launch (2.36-2.37). Craft: not started |
+| Investment on objects (not only links) | No release yet; the legacy converter added an investment-candidates GEMS library (to verify the link) |
+| Thermal ramp parameters | Simulator 10.3 (rc); Web gates ramp settings on study version 10.3 |
+| New open-source solver to replace Sirius | Not traced in this snapshot (to verify) |
+| Parquet outputs | Done for modeler and legacy simulation tables in Simulator 10.2; still listed |

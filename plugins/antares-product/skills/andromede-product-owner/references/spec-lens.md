@@ -1,31 +1,13 @@
-# Specification lens: checklist and templates
+# Specification lens: impact pass and templates
 
-Use with `product-management:write-spec` (append the Ecosystem impact block to its PRD) or standalone: sections 3
-to 6 are enough to produce an epic, stories, a brainstorm or a prioritisation without any other skill.
+Use with `product-management:write-spec` (append the Ecosystem impact block to its PRD) or standalone: sections 2
+to 7 are enough to produce an epic, stories, a brainstorm or a prioritisation without any other skill. Sections 2 and
+7 are required in every spec, epic, story and brainstorm.
 
-## 1. Cross-module impact checklist (run before writing)
+## 1. Cross-module impact pass (run before writing)
 
-For each line answer Yes / No / Unknown (Unknown -> open question with owner).
-
-| Area | Question |
-|---|---|
-| GEMS language | New/changed syntax, semantics, file (library/system/optim-config/taxonomy/catalog/view-config)? Language version bump (patch/minor/major)? |
-| GEMS libraries | Any of basic / andromede / antares_legacy / pypsa models change? Library version + CHANGELOG + sha256? |
-| GemsPy | Implementation needed? Parity with Simulator? PyPI release? |
-| Simulator legacy | Legacy solver behaviour or study format change? Study version + migration guide? |
-| Simulator hybrid | Works with legacy areas connections, MC per scenario, LP/MILP, horizon/resolution? Outputs (legacy + simulation table) coherent? |
-| Simulator modeler | Needed or explicitly out of scope? |
-| Xpansion | Affects MPS/problem structure, candidates, gems workflow (optim-config), trajectory investment, Benders performance? |
-| ViewsBuilder | Simulation table columns/semantics or layout, `system-for-views.yml`, taxonomy, catalogs, view-config, views output naming? |
-| antares_craft | New object/property to expose? Local and API backends both? |
-| AntaREST | UI, variant commands, study upgrade, results view, launcher config, API change? GEMS storage (DB schema, round trip of GEMS files), hybrid launch, GEMS views reader? |
-| antares-launcher | New binary, version detection, cluster resources? |
-| antares-datamanager | Study JSON (C11) or generated study (C1) change? Craft pin bump? Should generation produce it (GEMS / hybrid path)? |
-| Converters | Legacy->GEMS / PyPSA->GEMS output still valid? New mapping needed? Converter libraries, catalogs and view configs? |
-| Docs | Repo technical docs, antares-doc (user: release-notes feed, tutorial/reference page, roadmap line; nav entry in `mkdocs.yml`), GEMS docs + release notes, migration guides, changelogs? |
-| Tests | GEMS e2e validation, Simulator ctest + run-study-tests, GemsPy pytest, Xpansion tests, Web/craft tests, reference results to update? |
-| Versions/pins | Which pins must move (dependencies.json, COMPATIBILITY.md, antares-version.json, pyproject pins, requirements; list in versions.md)? In what order? |
-| Performance/HPC | Problem size, solve time, memory, cluster usage? |
+Walk the matching lines of the impact heuristics in `interactions.md`, then answer Yes / No / Unknown for each repo row
+of the Ecosystem impact block below. Unknown -> open question with owner.
 
 ## 2. Ecosystem impact block (append to every spec / epic / decision record)
 
@@ -49,7 +31,6 @@ For each line answer Yes / No / Unknown (Unknown -> open question with owner).
 | Converters | | | |
 | antares-doc | | | |
 
-**In-flight work:** <see section 7, or "none found for <keywords>", or "(not checked)">
 **Contracts touched:** C<n> <name>: <what changes> (see interactions.md)
 **Compatibility:** backward compatible? version bumps (language x.y.z, study version, packages). Migration path for existing studies/models.
 **Sequencing:** 1. <repo> ... 2. <repo> (needs pin bump) ... 3. docs/tooling
@@ -102,7 +83,7 @@ S|M|L - one-line rationale (user value, unblocking effect, risk reduction).
 ## 5. Brainstorm framing (add to `product-management:product-brainstorming` output, or use alone)
 
 - **Where could this live?** Generate at least one option per plausible layer (language/library, engine, planning, interface, post-processing) and compare on: user value, contract impact, parity cost, tooling story, vision fit, reversibility.
-- **Who already does part of it?** (e.g. Xpansion sensitivity vs GEMS Pareto/sensitivity; legacy hydro heuristics vs GEMS hydro pre-processing; Web results vs ViewsBuilder.) Include open issues and PRs from the in-flight scan (section 7): an option that an open PR already implements is cheaper, and one that contradicts it needs a conversation first.
+- **Who already does part of it?** (e.g. Xpansion sensitivity vs GEMS Pareto/sensitivity; legacy hydro heuristics vs GEMS hydro pre-processing; Web results vs ViewsBuilder.) Include in-flight items (section 7).
 - **What would make this a GEMS model instead of code?**
 - **Kill criteria**: what evidence would make us drop it.
 
@@ -127,7 +108,8 @@ Searched: org AntaresSimulatorTeam, open issues + PRs, <date>, keywords: "<set 1
 | #789 <title> | antares-xpansion | PR, draft | conflict | open question: <contract shape> - owners <team A> + <team B> |
 ```
 
-Relations: **answers gap** (becomes a dependency, leaves the scope), **partial overlap** (reuse or extend, don't
-duplicate), **conflict** (open question with both owner teams), **duplicate** (comment on the existing issue
-instead of creating one). Only list items you actually read; say "none found" when the search returned nothing
+Relations: **answers gap** (becomes a dependency, leaves the scope), **partial overlap** (reuse or extend, name the
+sibling issue, don't duplicate), **conflict** (another contract shape or owning layer: open question with both owner
+teams), **duplicate** (comment on the existing issue instead of creating one). An open PR is stronger evidence than a
+roadmap line: an option it already implements is cheaper, one it contradicts needs a conversation first. Only list items you actually read; say "none found" when the search returned nothing
 relevant.
