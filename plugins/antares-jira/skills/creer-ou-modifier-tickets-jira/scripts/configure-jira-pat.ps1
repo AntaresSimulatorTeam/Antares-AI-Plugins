@@ -1,9 +1,27 @@
 [CmdletBinding()]
 param(
-    [switch] $TerminalPrompt
+    [switch] $TerminalPrompt,
+
+    [string] $JiraUrl,
+
+    [string] $ConfluenceUrl
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'jira-skill-config.ps1')
+
+if (-not [string]::IsNullOrWhiteSpace($JiraUrl) -or -not [string]::IsNullOrWhiteSpace($ConfluenceUrl)) {
+    if ([string]::IsNullOrWhiteSpace($JiraUrl) -or [string]::IsNullOrWhiteSpace($ConfluenceUrl)) {
+        throw 'Fournir -JiraUrl et -ConfluenceUrl ensemble.'
+    }
+    $jiraBaseUrl = ConvertTo-RteBaseUrl -Value $JiraUrl -Label 'URL Jira'
+    $confluenceBaseUrl = ConvertTo-RteBaseUrl -Value $ConfluenceUrl -Label 'URL Confluence'
+}
+else {
+    $savedConfig = Get-JiraSkillConfig
+    $jiraBaseUrl = $savedConfig.JiraBaseUrl
+    $confluenceBaseUrl = $savedConfig.ConfluenceBaseUrl
+}
 
 if ($env:OS -eq 'Windows_NT') {
     $platform = 'Windows'
@@ -122,7 +140,7 @@ try {
         Accept        = 'application/json'
     }
     $user = Invoke-RestMethod `
-        -Uri 'https://gopro-tickets.rte-france.com/rest/api/2/myself' `
+        -Uri "$jiraBaseUrl/rest/api/2/myself" `
         -Method Get `
         -Headers $headers `
         -TimeoutSec 30 `
@@ -133,6 +151,9 @@ try {
         [string]::IsNullOrWhiteSpace($user.accountId)) {
         throw 'Jira n''a pas retourne d''identifiant utilisateur.'
     }
+
+    Save-JiraSkillConfig -JiraBaseUrl $jiraBaseUrl -ConfluenceBaseUrl $confluenceBaseUrl
+    Write-Output "Configuration des URL enregistree: $jiraBaseUrl (Jira), $confluenceBaseUrl (Confluence)."
 
     if ($platform -eq 'Windows') {
         $encryptedToken = ConvertFrom-SecureString -SecureString $secureToken
@@ -146,6 +167,8 @@ try {
         Write-Output 'PAT valide; stockage chiffre DPAPI dans le profil Windows courant.'
     }
     else {
+        $nativeBuffer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
+        $plainToken = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($nativeBuffer)
         $processInfo = New-Object System.Diagnostics.ProcessStartInfo
         $processInfo.FileName = $secretTool.Source
         $processInfo.Arguments = 'store --label=AntaresAI-Jira service AntaresAI account JiraDirectApi'
@@ -159,7 +182,7 @@ try {
             if (-not $storeProcess.Start()) {
                 throw 'Impossible de demarrer secret-tool.'
             }
-            $storeProcess.StandardInput.Write($token)
+            $storeProcess.StandardInput.Write($plainToken)
             $storeProcess.StandardInput.Close()
             $storeError = $storeProcess.StandardError.ReadToEnd()
             $storeProcess.WaitForExit()
@@ -172,7 +195,7 @@ try {
         }
         $storedToken = & $secretTool.Source lookup service AntaresAI account JiraDirectApi 2>$null
         if ($LASTEXITCODE -ne 0 -or
-            ((@($storedToken) -join "`n").TrimEnd("`r", "`n") -cne $token)) {
+            ((@($storedToken) -join "`n").TrimEnd("`r", "`n") -cne $plainToken)) {
             throw 'Le PAT a ete transmis au trousseau Linux mais sa relecture de verification a echoue.'
         }
         Write-Output 'PAT valide; stockage dans le trousseau Secret Service Linux.'
@@ -197,5 +220,5 @@ finally {
         [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($nativeBuffer)
     }
     if ($secureToken) { $secureToken.Dispose() }
-    Remove-Variable token, storedToken, storeOutput, secureToken, encryptedToken, headers, user -ErrorAction SilentlyContinue
+    Remove-Variable token, plainToken, storedToken, storeOutput, secureToken, encryptedToken, headers, user -ErrorAction SilentlyContinue
 }
