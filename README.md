@@ -5,9 +5,9 @@ named `antares`.
 
 ## Who it's for
 
-Study engineers who build, check and run Antares Simulator studies, and Antares contributors who prepare Jira
-tickets. Study skills are read-only by default and ask before changing a study; Jira ticket creation requires
-an explicit confirmation.
+Study engineers who build, check and run Antares Simulator studies, Antares contributors who prepare Jira
+tickets, and product owners who specify and prioritise work across the Antares repositories. Study skills are
+read-only by default and ask before changing a study; Jira ticket creation requires an explicit confirmation.
 
 ## Plugins
 
@@ -17,9 +17,16 @@ an explicit confirmation.
 | `antares-simulator` | `study-metadata` | Read a study's caption, author, version and dates, or rename it |
 | `antares-context` | `antares-context` | Find out what each Antares product does and which repository holds what |
 | `antares-jira` | `creer-ou-modifier-tickets-jira` | Create, verify or update Antares Jira tickets after confirmation, from a chat spec or a Confluence page |
+| `antares-product` | `andromede-product-owner` | Brainstorm, specify, prioritise or assess the cross-repo impact of work on the Andromede / Antares ecosystem |
 
 Each skill is self-contained: it carries all the context it needs in its own folder. `antares-context` only holds
 general knowledge about the ecosystem, not tied to any skill. You can install either plugin on its own.
+
+`andromede-product-owner` supplies the ecosystem context (contracts between modules, versions and pins, vision,
+spec checklist). For document structure it uses the skills of Anthropic's
+[`product-management`](https://github.com/anthropics/knowledge-work-plugins) plugin when that plugin is installed,
+and its own templates otherwise. It reads local clones of the repositories when `ANDROMEDE_ROOT` points to the
+folder holding them, or GitHub otherwise.
 
 ## Review pull requests in this repository
 
@@ -53,6 +60,7 @@ In Claude Code:
 /plugin install antares-simulator@antares
 /plugin install antares-context@antares
 /plugin install antares-jira@antares
+/plugin install antares-product@antares
 ```
 
 Or from a shell:
@@ -62,6 +70,7 @@ claude plugin marketplace add AntaresSimulatorTeam/Antares-AI-Plugins
 claude plugin install antares-simulator@antares
 claude plugin install antares-context@antares
 claude plugin install antares-jira@antares
+claude plugin install antares-product@antares
 ```
 
 To try a local checkout, use `claude plugin marketplace add ./Antares-AI-Plugins` instead.
@@ -77,6 +86,7 @@ gh skill install AntaresSimulatorTeam/Antares-AI-Plugins plugins/antares-simulat
 gh skill install AntaresSimulatorTeam/Antares-AI-Plugins plugins/antares-simulator/skills/study-metadata --agent copilot --scope project
 gh skill install AntaresSimulatorTeam/Antares-AI-Plugins plugins/antares-context/skills/antares-context --agent copilot --scope project
 gh skill install AntaresSimulatorTeam/Antares-AI-Plugins plugins/antares-jira/skills/creer-ou-modifier-tickets-jira --agent copilot --scope project
+gh skill install AntaresSimulatorTeam/Antares-AI-Plugins plugins/antares-product/skills/andromede-product-owner --agent copilot --scope project
 ```
 
 Install only the skills you need. Project-scoped skills are added to the current repository and are available to
@@ -102,6 +112,10 @@ plugins/
   antares-jira/
     .claude-plugin/plugin.json
     skills/creer-ou-modifier-tickets-jira/SKILL.md + references/ and scripts/
+  antares-product/
+    .claude-plugin/plugin.json
+    skills/andromede-product-owner/SKILL.md + references/ (map, contracts, versions, vision, spec lens, GEMS)
+                                          and scripts/ (clone freshness check)
 .github/
   copilot-instructions.md             repository-wide Copilot guidance
   agents/pr-review.agent.md           read-only PR review agent

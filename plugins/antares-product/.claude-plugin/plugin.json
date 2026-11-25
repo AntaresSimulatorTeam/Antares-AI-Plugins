@@ -1,0 +1,13 @@
+{
+  "name": "antares-product",
+  "version": "0.1.0",
+  "description": "Product-owner lens for the Andromede / Antares ecosystem: cross-repo impact, contracts, versions, vision and spec templates.",
+  "author": {
+    "name": "RTE",
+    "url": "https://www.rte-france.com"
+  },
+  "homepage": "https://github.com/AntaresSimulatorTeam/Antares-AI-Plugins",
+  "repository": "https://github.com/AntaresSimulatorTeam/Antares-AI-Plugins",
+  "license": "MPL-2.0",
+  "keywords": ["antares", "andromede", "gems", "product-owner", "roadmap", "specification"]
+}

@@ -26,6 +26,13 @@
       "description": "Create, verify or update Antares Jira tickets through the Jira REST API, from a chat spec or a Confluence page.",
       "category": "productivity",
       "tags": ["antares", "jira", "tickets"]
+    },
+    {
+      "name": "antares-product",
+      "source": "./plugins/antares-product",
+      "description": "Product-owner lens for the Andromede / Antares ecosystem: cross-repo impact, contracts, versions, vision and spec templates.",
+      "category": "productivity",
+      "tags": ["antares", "andromede", "gems", "product-owner", "roadmap"]
     }
   ]
 }
